@@ -11,6 +11,7 @@ library(magrittr)
 # Reading data 
 thematic::thematic_shiny(font = "auto")
 df = read.csv("student-mat.csv")
+df_encoded = read.csv("df_encoded.csv")
 dict = read_excel("data_dictionary.xlsx")
 
 #Categorical cols
@@ -36,6 +37,18 @@ discretiser = function(x){
     debut = debut + 2
     fin = fin + 2
   }
+}
+discretiserGrades = function(x){
+  if (x<10)
+    return("Echoue")
+  if (x>=10)
+    return("Valide")
+}
+binarise = function(x){
+  if (x<10)
+    return("0")
+  if (x>=10)
+    return("1")
 }
 
 # UI
@@ -127,7 +140,7 @@ ui <- fluidPage( theme = bs_theme(bootswatch = "flatly", base_font = font_google
                                               column(6, 
                                                      plotOutput(outputId = "piechartYes")),
                                               column(6, 
-                                                     plotOutput(outputId = "piechartNo"))
+                                                     plotOutput(outputId = "mboxplots"))
                                           )
                                       )
                                   )
@@ -383,7 +396,7 @@ server <- function(input, output) {
                    theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)))
     })
     
-    output$piechartNo = renderPlot({
+    output$mboxplots = renderPlot({
         return(qplot(x = df[, input$selectqual], y = df[, "G3"],
                      xlab = paste("Modalités de", input$selectqual, sep=" "), ylab = "Final grade",
                      geom=c("boxplot","jitter"), fill= df[, input$selectqual]) +
@@ -438,6 +451,75 @@ server <- function(input, output) {
                    geom=c("boxplot"), fill=data.stack[,1]) +
                theme(legend.title=element_blank()))
     })
+    
+    output$boxplotAcc = renderPlot({
+      B <- 10
+      acc_valid <- rep(NA,10)
+      
+      for (b in 1:B)
+      {
+        smp_size <- floor(0.75 * nrow(df_encoded))
+        tr <- sample(1:nrow(df_encoded),smp_size)
+              
+        train <- df_encoded[tr,]
+        trainClass = sapply(train$G3, discretiserGrades)
+        test <- df_encoded[-tr,]
+        testClass = sapply(test$G3, discretiserGrades)
+        ka = input$k
+
+        pred <- knn(train[, -ncol(df_encoded)],test[, -ncol(df_encoded)],trainClass,k=ka)
+        acc_valid[b] <- mean(pred==testClass)
+      }
+      boxplot(acc_valid,main="Accuracy lors des 10-fold cross validation")
+    })
+    output$ROC = renderPlot({
+      smp_size <- floor(0.75 * nrow(df_encoded))
+      tr <- sample(1:nrow(df_encoded),smp_size)
+      
+     
+      train <- df_encoded[tr,]
+      trainClass = sapply(train$G3, binarise)
+      test <- df_encoded[-tr,]
+      testClass = sapply(test$G3, binarise)
+      
+      prob <- rep(NA, nrow(test))
+      ka = input$k
+      res <- knn(train[, -ncol(df_encoded)],test[, -ncol(df_encoded)],trainClass,k=ka, prob=TRUE)
+      prob[res==1] <- attr(res,"prob")[res==1]
+      prob[res==0] <- 1-attr(res,"prob")[res==0]
+      
+      pred <- prediction(prob, testClass)
+      perf <- performance(pred, "tpr", "fpr")
+      plot(perf, main="Courbe ROC") #courbe ROC
+      abline(a=0, b=1)
+      
+    })
+    output$boxplotAcc2 = renderPlot({
+      B <- 10
+      acc_valid <- rep(NA,10)
+      
+      for (b in 1:10)
+      {
+        smp_size <- floor(0.75 * nrow(df))
+        tr <- sample(1:nrow(df),smp_size)
+        
+       
+        train <- df_encoded[tr,]
+        trainClass = sapply(train$G3, binarise)
+        test <- df_encoded[-tr,]
+        testClass = sapply(test$G3, binarise)
+        train = train[, -ncol(df_encoded)]
+        train['G3'] = as.numeric(trainClass)
+        # Fit the model
+        model <- glm(  G3 ~., data = train, family = binomial)
+        prob <- model %>% predict(test[, -ncol(df_encoded)], type = "response")
+        pred <- ifelse(prob > 0.5, 1, 0)
+        acc_valid[b] <- mean(pred==testClass)
+      }
+      boxplot(acc_valid,main="Accuracy lors des 10-fold cross validation")
+    })
+    
+    
 }
 
 # Run the application 
