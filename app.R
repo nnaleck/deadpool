@@ -26,17 +26,17 @@ for (col in categorical){
     df[, col] <- as.factor(df[, col])    
 }
 
-#discretiser = function(x){
-#    if (x<=10){
-#        return("Tenure_0-10")
-#    }else if (x<=20){
-#        return("Tenure_10-20")
-#    }else if (x<=30){
-#        return("Tenure_20-30")
-#    }else {
-#        return("Tenure_30-40")
-#    }
-#}
+discretiser = function(x){
+  debut = 0
+  fin = 2  
+  while(TRUE){
+    if (x<=fin){
+        return(paste(paste(paste("Tenure_", debut), '-'), fin))
+    }
+    debut = debut + 2
+    fin = fin + 2
+  }
+}
 
 # UI
 ui <- fluidPage( theme = bs_theme(bootswatch = "flatly", base_font = font_google("PT Serif", local = TRUE)),
@@ -137,27 +137,23 @@ ui <- fluidPage( theme = bs_theme(bootswatch = "flatly", base_font = font_google
                                   sidebarLayout(
                                       sidebarPanel(
                                           selectInput("selectquant", label = h4("select a quantitative variable"),
-                                                      choices = quan,
+                                                      choices = setdiff(quan, 'G3'),
                                                       selected=1
                                           )
                                       ),
                                       mainPanel(   
-                                          fluidRow(
-                                              column(6, 
-                                                     plotOutput(outputId = "boxplotC")),
-                                              column(6, 
-                                                     plotOutput(outputId = "frequenceHistC"))
-                                          ),
-                                          fluidRow(
-                                              column(6, 
-                                                     plotOutput(outputId = "effectifsCumCurveC")),
-                                              column(6, 
-                                                     tableOutput(outputId = "tabStatC"))
-                                          )  
+                                        fluidRow(
+                                          column(6, fluidRow(
+                                            column(12, plotOutput(outputId = "gradesCorrP")),
+                                            column(4, offset = 3, textOutput("gradesCorr"))
+                                          )),
+                                          column(6, 
+                                                 plotOutput(outputId = "boxplots"))
+                                        )
                                       )
                                   )
                         ),
-                        tabPanel("Analyse selon 'YearsAtCompany'",
+                        tabPanel("Analyse selon l'absence",
                                  fluidRow(
                                      column(6, 
                                             plotOutput(outputId = "yearsNum")),
@@ -261,12 +257,7 @@ server <- function(input, output) {
         }
     });
     
-    output$boxplotC <- renderPlot({
-        ggplot(data=df)+
-            geom_boxplot(mapping = aes_string("Attrition", input$selectquant))+
-            xlab(label = "Churn")+
-            ylab(label=input$selectquant)
-    });
+    
     
     output$frequenceHist <- renderPlot({
         if (is.numeric(df[, input$select]))
@@ -284,15 +275,7 @@ server <- function(input, output) {
         }
     });
     
-    # Histogramme des frequences
-    output$frequenceHistC <- renderPlot({
-        ggplot(data=df)+
-            geom_histogram(mapping = aes_string(input$selectquant, fill="Attrition"), bins = 10)+
-            xlab(label = input$selectquant)+
-            ylab(label="Frequency")+
-            theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
-        
-    });
+    
     
     # Courbe cumulative
     output$effectifsCumCurve <- renderPlot({
@@ -309,28 +292,7 @@ server <- function(input, output) {
              type = "o", col = "blue", lwd = 2)
     });
     
-    output$effectifsCumCurveC <- renderPlot({
-        if(! is.numeric(df[, input$selectquant])) return(NULL)
-        
-        churn=c("Yes", "No")
-        #Recuperation des donnees a partir de l'histogramme
-        tmp.hist <- hist( df[df$Attrition=='Yes', ][, input$selectquant], plot = FALSE,
-                              right = FALSE)
-            
-            plot(x = tmp.hist$breaks[-1], y = cumsum(tmp.hist$counts),
-             xlab = input$selectquant,
-             ylab = "Effectifs cumules",
-             main = paste("Courbe cumulative de ", input$selectquant, sep=""),
-             type = "o", col = "blue")
-        tmp.hist1 <- hist( df[df$Attrition=='No', ][, input$selectquant], plot = FALSE,
-                              right = FALSE)
-            
-        lines(x = tmp.hist1$breaks[-1], y = cumsum(tmp.hist1$counts), col = "red", type = "b")
-        legend("topleft",
-               c("Churn","Not churn"),
-               fill=c("blue","red")
-        )    
-    });
+    
     
     # tabStat
     output$tabStat <- renderTable({
@@ -431,10 +393,10 @@ server <- function(input, output) {
       
     output$yearsNum = renderPlot({
         df_tmp = data.frame(df)
-        tenure = sapply(df$YearsAtCompany, discretiser)
+        tenure = sapply(df$absences, discretiser)
         df_tmp$Tenure = tenure
-        return(ggplot(df_tmp, aes_string(x = 'Tenure' , fill='Attrition')) + 
-                   geom_bar() +
+        return(ggplot(df_tmp, aes_string(x = 'G3' , fill='Tenure')) + 
+                   geom_histogram() +
                    theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+
                    labs(
                        title= paste("Tenure groups count"))
@@ -443,22 +405,38 @@ server <- function(input, output) {
     
     output$yearsInc = renderPlot({
         df_tmp = data.frame(df)
-        tenure = sapply(df$YearsAtCompany, discretiser)
+        tenure = sapply(df$absences, discretiser)
         df_tmp$Tenure = tenure
-        df_tmp %>%
-            group_by(Tenure, Attrition) %>%
-            summarise(mean_monthly_inc = mean(MonthlyIncome)) %>%
-            ggplot(aes(x = Tenure, y = mean_monthly_inc, fill = Attrition)) +
-            geom_bar(stat = "identity") +
-            theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)) +
-            labs(
-                x = "Tenure groups",
-                y = "Average monthly income",
-                title = paste(
-                    "Average monthly income by tenure groups"
-                )
-            )
-             
+        return(qplot(x = df_tmp$Tenure, y = df_tmp$G3,
+                     xlab = "Modalités", ylab = "Final grade(G3)",
+                     geom=c("boxplot"), fill=df_tmp$Tenure) +
+                 theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)))
+    })
+    
+    output$gradesCorrP <- renderPlot({
+      plot(
+        x = df[, input$selectquant], y = df[, 'G3'],
+        col = "red",
+        main=paste('Final grade with regards to ', input$selectA),
+        xlab = input$selectquant, ylab='G3'
+      )
+      abline(lm(df[, 'G3']~df[, input$selectquant]), col="blue", lwd = 2)
+    })
+    
+    output$gradesCorr <- renderText({
+      coeff_correlation.tmp <- cov(df$G3, df[, input$selectquant])/(sqrt(var(df$G3)*var(df[, input$selectquant])))
+      paste('Coeff de corrélation linéaire = ', round(coeff_correlation.tmp, digits=2))
+    })
+    
+    output$boxplots <- renderPlot({
+      columns = c('G3', input$selectquant)
+      # Reshape data()
+      data.stack <- melt(df[, columns], measure.vars = columns)
+      # Boxplot élaborée
+      return(qplot(x = data.stack[,1], y = data.stack[,2], 
+                   xlab = "Modalités", ylab = "Mesures",
+                   geom=c("boxplot"), fill=data.stack[,1]) +
+               theme(legend.title=element_blank()))
     })
 }
 
