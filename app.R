@@ -7,6 +7,7 @@ library(ROCR)
 library(class)
 library(dplyr)
 library(magrittr)
+library(factoextra)
 
 # Reading data 
 thematic::thematic_shiny(font = "auto")
@@ -210,7 +211,23 @@ ui <- fluidPage( theme = bs_theme(bootswatch = "flatly", base_font = font_google
                                   )   
                          )   
                          )
-                         )
+                         ),
+                       tabPanel('Unsupervised Learning',
+                                tabsetPanel(
+                                  tabPanel('KMeans Clustering',
+                                           sidebarLayout(
+                                             sidebarPanel(
+                                               sliderInput('nb_clusters', 'Number of clusters', value = 3, min = 2, max = 7),
+                                             ),
+                                             mainPanel(
+                                               fluidRow(
+                                                 column(12, plotOutput(outputId = "clustering_plot"))
+                                               )
+                                             )
+                                           )
+                                  )
+                                )
+                       )
             )
         )
 
@@ -450,6 +467,15 @@ server <- function(input, output) {
                    xlab = "Modalités", ylab = "Mesures",
                    geom=c("boxplot"), fill=data.stack[,1]) +
                theme(legend.title=element_blank()))
+    })
+
+    output$clustering_plot <- renderPlot({
+      # Keeping only continuous variables
+      df <- df[, ! names(df) %in% categorical]
+
+      km.res <- kmeans(df, input$nb_clusters, nstart = 25)
+
+      fviz_cluster(km.res, df, ellipse.type = "norm")
     })
     
     output$boxplotAcc = renderPlot({
