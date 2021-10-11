@@ -4,26 +4,28 @@ library(reshape2)
 library(readxl)
 library(bslib)
 library(ROCR)
+library(pROC)
 library(class)
 library(dplyr)
 library(magrittr)
 library(factoextra)
 library(ggbiplot)
+library(plotly)
 
 # Reading data 
 thematic::thematic_shiny(font = "auto")
-df = read.csv("student-mat.csv")
-df_encoded = read.csv("df_encoded.csv")
-dict = read_excel("data_dictionary.xlsx")
+df <- read.csv("student-mat.csv")
+df_encoded <- read.csv("df_encoded.csv")
+dict <- read_excel("data_dictionary.xlsx")
 
 #Categorical cols
-categorical = c('school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu', 'Fedu',
+categorical <- c('school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu', 'Fedu',
                 'Mjob', 'Fjob', 'reason', 'guardian', 'traveltime', 'studytime',
                 'failures', 'schoolsup', 'famsup', 'paid', 'activities', 'nursery',
                 'higher', 'internet', 'romantic', 'famrel', 'freetime', 'goout', 'Dalc',
                 'Walc', 'health')
 
-quan = setdiff(names(df), categorical)
+quan <- setdiff(names(df), categorical)
 
 for (col in categorical){
     df[, col] <- as.factor(df[, col])    
@@ -60,19 +62,19 @@ ui <- fluidPage( theme = bs_theme(bootswatch = "flatly", base_font = font_google
                 tabPanel("Descriptive analysis",
                      h4("Travail realisé par Ilyes Kamel, Abdelkarim Azzaz et Achraf Louiza"),
                         tabsetPanel(
-                            tabPanel("Résumé",
+                            tabPanel("Data summary",
                                      fluidRow(
                                          column(6, 
-                                                h3("dataset: Student grade prediction"),
+                                                h3("Student grade prediction dataset"),
                                                 textOutput(outputId = "resumeIt")
                                                 ),
                                          column(6, 
                                                 tableOutput(outputId = "dict"))
                                      )),
-                            tabPanel("Analyse univariée",
+                            tabPanel("Univariate analysis",
                                      sidebarLayout(
                                          sidebarPanel(
-                                             selectInput("select", label = h4("select a feature for univariate analysis"),
+                                             selectInput("select", label = h4("Select a feature for univariate analysis"),
                                                          choices = sort(names(df)),
                                                          selected=1
                                              )
@@ -80,20 +82,20 @@ ui <- fluidPage( theme = bs_theme(bootswatch = "flatly", base_font = font_google
                                          mainPanel(
                                              fluidRow(
                                                  column(6, 
-                                                        plotOutput(outputId = "effectifsHist")),
+                                                        plotlyOutput(outputId = "effectifsHist")),
                                                  column(6, 
-                                                        plotOutput(outputId = "frequenceHist"))
+                                                        plotlyOutput(outputId = "frequenceHist"))
                                              ),
                                              fluidRow(
                                                  column(6, 
-                                                        plotOutput(outputId = "effectifsCumCurve")),
+                                                        plotlyOutput(outputId = "effectifsCumCurve")),
                                                  column(6, 
                                                         tableOutput(outputId = "tabStat"))
                                              ) 
                                          )
                                      )
                             ),
-                            tabPanel("Analyse bivariée",
+                            tabPanel("Bivariate analysis",
                                      sidebarLayout(
                                          sidebarPanel(
                                              h4("Select 2 features for bivariate analysis"),
@@ -108,18 +110,12 @@ ui <- fluidPage( theme = bs_theme(bootswatch = "flatly", base_font = font_google
                                          mainPanel(
                                              fluidRow(
                                                  column(6, fluidRow(
-                                                     column(12, plotOutput(outputId = "nuagePointsBiv")),
+                                                     column(12, plotlyOutput(outputId = "nuagePointsBiv")),
                                                      column(4, offset = 3, textOutput("correlation"))
                                                  )),
                                                  column(6, 
-                                                        plotOutput(outputId = "histogrammeMod"))
-                                             ),
-                                             fluidRow(
-                                                 column(6, 
-                                                        tableOutput(outputId = "contingence")),
-                                                 column(6, 
-                                                        plotOutput(outputId = "boxplotB"))
-                                             ) 
+                                                        plotlyOutput(outputId = "histogrammeMod"))
+                                             )
                                          )
                                      )
                             ),
@@ -132,7 +128,7 @@ ui <- fluidPage( theme = bs_theme(bootswatch = "flatly", base_font = font_google
                          tabPanel("Qualitative variables",
                                   sidebarLayout(
                                       sidebarPanel(
-                                          selectInput("selectqual", label = h4("select a qualitative variable"),
+                                          selectInput("selectqual", label = h4("Select a qualitative variable"),
                                                       choices = categorical,
                                                       selected=1
                                           )
@@ -140,9 +136,9 @@ ui <- fluidPage( theme = bs_theme(bootswatch = "flatly", base_font = font_google
                                       mainPanel(   
                                           fluidRow(
                                               column(6, 
-                                                     plotOutput(outputId = "piechartYes")),
+                                                     plotlyOutput(outputId = "piechartYes")),
                                               column(6, 
-                                                     plotOutput(outputId = "mboxplots"))
+                                                     plotlyOutput(outputId = "mboxplots"))
                                           )
                                       )
                                   )
@@ -151,29 +147,28 @@ ui <- fluidPage( theme = bs_theme(bootswatch = "flatly", base_font = font_google
                          tabPanel("Quantitave variables", 
                                   sidebarLayout(
                                       sidebarPanel(
-                                          selectInput("selectquant", label = h4("select a quantitative variable"),
+                                          selectInput("selectquant", label = h4("Select a quantitative variable"),
                                                       choices = setdiff(quan, 'G3'),
                                                       selected=1
                                           )
                                       ),
-                                      mainPanel(   
+                                      mainPanel(
                                         fluidRow(
-                                          column(6, fluidRow(
-                                            column(12, plotOutput(outputId = "gradesCorrP")),
-                                            column(4, offset = 3, textOutput("gradesCorr"))
-                                          )),
-                                          column(6, 
-                                                 plotOutput(outputId = "boxplots"))
+                                          column(12, plotlyOutput(outputId = "gradesCorrP"))
+                                        ),
+                                        fluidRow(
+                                          column(4, offset = 3, textOutput("gradesCorr")),
+                                          column(8, plotlyOutput(outputId = "boxplots"))
                                         )
                                       )
                                   )
                         ),
-                        tabPanel("Analyse selon l'absence",
+                        tabPanel("Analyse according to tenure",
                                  fluidRow(
-                                     column(6, 
-                                            plotOutput(outputId = "yearsNum")),
-                                     column(6, 
-                                            plotOutput(outputId = "yearsInc"))
+                                     column(12, plotlyOutput(outputId = "yearsNum")),
+                                 ),
+                                 fluidRow(
+                                   column(12, plotlyOutput(outputId = "yearsInc"))
                                  )
                                  
                         )
@@ -185,13 +180,13 @@ ui <- fluidPage( theme = bs_theme(bootswatch = "flatly", base_font = font_google
                          tabPanel("k nearest neighbors",
                                   sidebarLayout(
                                   sidebarPanel(
-                                    sliderInput('k', 'Select the Number of Nearest Neighbours', value = 6, min = 1, max = 100),
+                                    sliderInput('k', 'Select the Number K of Nearest Neighbours', value = 6, min = 1, max = 100),
                                     checkboxInput('balance', label = "Balance data (only for training)")
                                   ),
                                   mainPanel(
                                       fluidRow(
                                           column(6, 
-                                                 plotOutput(outputId = "boxplotAcc")
+                                                 plotlyOutput(outputId = "boxplotAcc")
                                                  ),
                                           column(6, 
                                                  plotOutput(outputId = "ROC")
@@ -203,11 +198,8 @@ ui <- fluidPage( theme = bs_theme(bootswatch = "flatly", base_font = font_google
                          tabPanel("Logistic regression",
                                   checkboxInput('balance2', label = "Balance data (only for training)"),
                                   fluidRow(
-                                      column(6, 
-                                             plotOutput(outputId = "boxplotAcc2")
-                                      ),
-                                      column(6, 
-                                             plotOutput(outputId = "ROC2")
+                                      column(12,
+                                             plotlyOutput(outputId = "boxplotAcc2")
                                       )
                                   )   
                          )   
@@ -230,7 +222,7 @@ ui <- fluidPage( theme = bs_theme(bootswatch = "flatly", base_font = font_google
                                   tabPanel('Principal Component Analysis',
                                          mainPanel(
                                            fluidRow(
-                                             column(12, plotOutput(outputId = "pca_plot"))
+                                             column(12, plotlyOutput(outputId = "pca_plot"))
                                            )
                                          )
                                   )
@@ -256,16 +248,13 @@ server <- function(input, output) {
         table.tmp
     })
     
-    # Tableau statistique [quantitative]
+    # Quantitative statistic table
     tabStatsQuant <- reactive({
-        q = data.frame(statistiques = c('min', 'quantile 25%', 'median', 'quantile 75%',
-                                        'max', 'moyenne', 'ecart type'),
-                       values = c(quantile(df[, input$select]), 
-                                  mean(df[, input$select]),
-                                  sd(df[, input$select]))
+        data.frame(
+          stat = c('min', 'quantile 25%', 'median', 'quantile 75%', 'max', 'avg', 'standard dev.'),
+          values = c(quantile(df[, input$select]), mean(df[, input$select]), sd(df[, input$select]))
         )
-        
-    });
+    })
     
     output$dict <- renderTable({
         dict
@@ -284,89 +273,113 @@ server <- function(input, output) {
         }
     });
     
-    output$effectifsHist <- renderPlot({
-        if (is.numeric(df[, input$select])){
-            boxplot(df[, input$select], main=paste("Boxplot de", input$select, sep=" "))
-            } else {
-            effectifs <- table(df[, input$select])
-            barplot(effectifs, ylab="Effectifs",
-                    main = paste("diagramme en baton de ", input$select, sep=""))
-            
-        }
-    });
+    output$effectifsHist <- renderPlotly({
+      if (is.numeric(df[, input$select]))
+      {
+        fig <- plot_ly(y = df[, input$select], type = 'box')
+        fig <- fig %>% layout(title = paste('Boxplot of', input$select, sep = ' '))
+        return(fig)
+      }
+      else
+      {
+        numbers <- as.data.frame(table(df[, input$select]))
+
+        fig <- plot_ly(x = numbers[, 'Var1'], y = numbers[, 'Freq'], type = 'bar')
+        fig <- fig %>% layout(title = paste('Barplot of', input$select, sep = ' '))
+
+        return(fig)
+      }
+    })
     
     
     
-    output$frequenceHist <- renderPlot({
+    output$frequenceHist <- renderPlotly({
         if (is.numeric(df[, input$select]))
         {
-            hist( df[, input$select], freq = FALSE,
-                  main = paste("Histogramme de ", input$select, sep=""), col = "green",
-                  xlab = input$select, ylab = "Densité de frequences", 
-                  right = FALSE,)
-        } else {
-            # Calcul des effectifs
-            effectifs <- table(df[, input$select])
-            #Diagramme en secteur
-            pie(effectifs, 
-                main =paste("Diagramme en secteurs de ", input$select, sep=""))
+          numbers <- as.data.frame(table(df[, input$select]))
+
+          fig <- plot_ly(y = numbers[, 'Freq'], x = numbers[, 'Var1'], type = 'bar')
+          fig <- fig %>% layout(title = paste('Histogram of', input$select, sep = ' '))
+
+          return(fig)
         }
-    });
-    
-    
+        else
+        {
+          numbers <- as.data.frame(table(df[, input$select]))
+
+          fig <- plot_ly(labels = numbers[, 'Var1'], values = numbers[, 'Freq'], type = 'pie')
+          fig <- fig %>% layout(title = paste('Frequency pie chart distribution of', input$select, sep = ' '))
+
+          return(fig)
+        }
+    })
     
     # Courbe cumulative
-    output$effectifsCumCurve <- renderPlot({
+    output$effectifsCumCurve <- renderPlotly({
         if(! is.numeric(df[, input$select])) return(NULL)
-        
-        #Recuperation des donnees a partir de l'histogramme
+
+        # Getting data from histogram
         tmp.hist <- hist( df[, input$select], plot = FALSE,
                           right = FALSE)
         
-        plot(x = tmp.hist$breaks[-1], y = cumsum(tmp.hist$counts),
-             xlab = input$select,
-             ylab = "Effectifs cumules",
-             main = paste("Courbe cumulative de ", input$select, sep=""),
-             type = "o", col = "blue", lwd = 2)
-    });
-    
-    
+        fig <- plot_ly(x = tmp.hist$breaks[-1], y = cumsum(tmp.hist$counts), mode = 'lines+markers')
+        fig <- fig %>% layout(title = paste('Population cumulative curve of', input$select, sep = ' '))
+
+        return(fig)
+    })
     
     # tabStat
     output$tabStat <- renderTable({
         if(! is.numeric(df[, input$select])) return(NULL)
+
         tabStatsQuant()
     });
     
     ##Analyse bivariée: 
-    output$nuagePointsBiv <- renderPlot({
-        if (!is.numeric(df[, input$selectA]) & !is.numeric(df[, input$selectB])){
-            return(ggplot(df, aes_string(x = input$selectA , fill=input$selectB)) + 
+    output$nuagePointsBiv <- renderPlotly({
+        if (! is.numeric(df[, input$selectA]) & ! is.numeric(df[, input$selectB]))
+        {
+            p <- ggplot(df, aes_string(x = input$selectA , fill=input$selectB)) +
                        geom_bar() +
-                       theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)))
+                       theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+            return(ggplotly(p))
         }
-        if( is.numeric(df[, input$selectA]) &  is.numeric(df[, input$selectB])){
-            plot(
-                x = df[, input$selectA], y = df[, input$selectB],
-                col = "red",
-                main=paste(input$selectB, 'en fonction de ', input$selectA),
-                xlab = input$selectA, ylab=input$selectB
+        else if( is.numeric(df[, input$selectA]) &  is.numeric(df[, input$selectB]))
+        {
+            p <- plot_ly(
+              x = df[, input$selectA],
+              y = df[, input$selectB],
+              name = paste(input$selectB, ' according to ', input$selectA),
+              type = 'scatter',
+              mode = 'markers'
             )
-            abline(lm(df[, input$selectB]~df[, input$selectA]), col="blue", lwd = 2)
+
+            p <- p %>% add_trace(
+              x = df[, input$selectA],
+              y = fitted(lm(df[, input$selectB]~df[, input$selectA])),
+              mode = 'lines',
+              name = 'Linear model'
+            )
+
+            return(p)
         }
-        if(is.numeric(df[, input$selectA]) &  !is.numeric(df[, input$selectB])){
-            return(ggplot(data=df)+
-                       geom_histogram(mapping = aes_string(input$selectA, fill=input$selectB), bins = 10)+
-                       xlab(label = input$selectA)+
+        else if(
+          (is.numeric(df[, input$selectA]) & !is.numeric(df[, input$selectB]))
+          |
+          (is.numeric(df[, input$selectB]) & !is.numeric(df[, input$selectA]))
+        )
+        {
+            xlabel <- if(is.numeric(df[, input$selectA])) input$selectA else input$selectB
+            ylabel <- if(is.numeric(df[, input$selectA])) input$selectB else input$selectA
+
+            p <- ggplot(data=df)+
+                       geom_histogram(mapping = aes_string(xlabel, fill=ylabel), bins = 10)+
+                       xlab(label = xlabel)+
                        ylab(label="Frequency")+
-                       theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)))
-        }
-        if(!is.numeric(df[, input$selectA]) &  is.numeric(df[, input$selectB])){ 
-            ggplot(data=df)+
-                geom_histogram(mapping = aes_string(input$selectB, fill=input$selectA), bins = 10)+
-                xlab(label = input$selectB)+
-                ylab(label="Frequency")+
-                theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+                       theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+            return(ggplotly(p))
         }
     })
     
@@ -383,82 +396,103 @@ server <- function(input, output) {
         
         heatmap(corrMatrix.tmp)
     })
-    output$histogrammeMod = renderPlot({
+
+    output$histogrammeMod <- renderPlotly({
         if( is.numeric(df[, input$selectA]) & is.numeric(df[, input$selectB])){  
-            columns = c(input$selectA, input$selectB)
+            columns <- c(input$selectA, input$selectB)
             # Reshape data()
             data.stack <- melt(df[, columns], measure.vars = columns)
             # Boxplot élaborée
-            return(qplot(x = data.stack[,1], y = data.stack[,2], 
+            p <- qplot(x = data.stack[,1], y = data.stack[,2],
                          xlab = "Modalités", ylab = "Mesures",
                          geom=c("boxplot"), fill=data.stack[,1]) +
-                       theme(legend.title=element_blank()))
+                       theme(legend.title=element_blank())
+
+            return(ggplotly(p))
         }
         if ( is.numeric(df[, input$selectA]) & !is.numeric(df[, input$selectB])){
             
-            return(qplot(x = df[, input$selectB], y = df[, input$selectA],
+            p <- qplot(x = df[, input$selectB], y = df[, input$selectA],
                          xlab = "Modalités", ylab = "Mesures",
                          geom=c("boxplot"), fill=df[, input$selectB]) +
-                       theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)))
+                       theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+            return(ggplotly(p))
         }
         if ( !is.numeric(df[, input$selectA]) & is.numeric(df[, input$selectB])){
-            ggplot(data=df)+
+            p <- ggplot(data=df)+
                 geom_boxplot(mapping = aes_string(input$selectA, input$selectB))+
                 xlab(label = input$selectA)+
                 ylab(label=input$selectB)+
                 theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+            return(ggplotly(p))
         }
         
     })
-    
-  
-    
-    output$piechartYes = renderPlot({
-        return(ggplot(data=df)+
+
+    output$piechartYes <- renderPlotly({
+        p <- ggplot(data=df)+
                    geom_histogram(mapping = aes_string('G3', fill=input$selectqual), bins = 10)+
                    xlab(label = 'Final grade')+
                    ylab(label="Frequency")+
-                   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)))
+                   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+        return(ggplotly(p))
     })
     
-    output$mboxplots = renderPlot({
-        return(qplot(x = df[, input$selectqual], y = df[, "G3"],
+    output$mboxplots <- renderPlotly({
+        p <- qplot(x = df[, input$selectqual], y = df[, "G3"],
                      xlab = paste("Modalités de", input$selectqual, sep=" "), ylab = "Final grade",
                      geom=c("boxplot","jitter"), fill= df[, input$selectqual]) +
-                   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)))
+                   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+        return(ggplotly(p))
     })
     
       
-    output$yearsNum = renderPlot({
-        df_tmp = data.frame(df)
-        tenure = sapply(df$absences, discretiser)
-        df_tmp$Tenure = tenure
-        return(ggplot(df_tmp, aes_string(x = 'G3' , fill='Tenure')) + 
+    output$yearsNum <- renderPlotly({
+        df_tmp <- data.frame(df)
+        tenure <- sapply(df$absences, discretiser)
+        df_tmp$Tenure <- tenure
+        p <- ggplot(df_tmp, aes_string(x = 'G3' , fill='Tenure')) +
                    geom_histogram() +
                    theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+
-                   labs(
-                       title= paste("Tenure groups count"))
-                   )
+                   labs(title= paste("Tenure groups count"))
+
+        return(ggplotly(p))
     })
     
-    output$yearsInc = renderPlot({
-        df_tmp = data.frame(df)
-        tenure = sapply(df$absences, discretiser)
-        df_tmp$Tenure = tenure
-        return(qplot(x = df_tmp$Tenure, y = df_tmp$G3,
+    output$yearsInc <- renderPlotly({
+        df_tmp <- data.frame(df)
+        tenure <- sapply(df$absences, discretiser)
+        df_tmp$Tenure <- tenure
+        p <- qplot(x = df_tmp$Tenure, y = df_tmp$G3,
                      xlab = "Modalités", ylab = "Final grade(G3)",
                      geom=c("boxplot"), fill=df_tmp$Tenure) +
-                 theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)))
+                 theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+      return(ggplotly(p))
     })
     
-    output$gradesCorrP <- renderPlot({
-      plot(
-        x = df[, input$selectquant], y = df[, 'G3'],
+    output$gradesCorrP <- renderPlotly({
+      p <- plot_ly(
+        x = df[, input$selectquant],
+        y = df[, 'G3'],
         col = "red",
-        main=paste('Final grade with regards to ', input$selectA),
-        xlab = input$selectquant, ylab='G3'
+        name=paste('Final grade with regards to ', input$selectquant),
+        type = 'scatter',
+        mode = 'markers'
       )
-      abline(lm(df[, 'G3']~df[, input$selectquant]), col="blue", lwd = 2)
+
+      p <- p %>% add_trace(
+        x = df[, input$selectquant],
+        y = fitted(lm(df[, 'G3']~df[, input$selectquant])),
+        mode = 'lines',
+        name = 'Linear model'
+      )
+
+      return(p)
     })
     
     output$gradesCorr <- renderText({
@@ -466,15 +500,17 @@ server <- function(input, output) {
       paste('Coeff de corrélation linéaire = ', round(coeff_correlation.tmp, digits=2))
     })
     
-    output$boxplots <- renderPlot({
+    output$boxplots <- renderPlotly({
       columns = c('G3', input$selectquant)
       # Reshape data()
       data.stack <- melt(df[, columns], measure.vars = columns)
       # Boxplot élaborée
-      return(qplot(x = data.stack[,1], y = data.stack[,2], 
+      p <- qplot(x = data.stack[,1], y = data.stack[,2],
                    xlab = "Modalités", ylab = "Mesures",
                    geom=c("boxplot"), fill=data.stack[,1]) +
-               theme(legend.title=element_blank()))
+               theme(legend.title=element_blank())
+
+      return(ggplotly(p))
     })
 
     output$clustering_plot <- renderPlot({
@@ -486,16 +522,18 @@ server <- function(input, output) {
       fviz_cluster(km.res, df, ellipse.type = "norm")
     })
 
-    output$pca_plot <- renderPlot({
+    output$pca_plot <- renderPlotly({
       df <- df[, ! names(df) %in% categorical]
 
       pca <- prcomp(df, center = TRUE, scale = TRUE)
 
       # Only keeping PC1 & PC2
-      ggbiplot(pca, labels = rownames(df))
+      p <- ggbiplot(pca, labels = rownames(df))
+
+      return(ggplotly(p))
     })
     
-    output$boxplotAcc = renderPlot({
+    output$boxplotAcc <- renderPlotly({
       B <- 10
       acc_valid <- rep(NA,10)
       
@@ -505,39 +543,42 @@ server <- function(input, output) {
         tr <- sample(1:nrow(df_encoded),smp_size)
               
         train <- df_encoded[tr,]
-        trainClass = sapply(train$G3, discretiserGrades)
+        trainClass <- sapply(train$G3, discretiserGrades)
         test <- df_encoded[-tr,]
-        testClass = sapply(test$G3, discretiserGrades)
-        ka = input$k
+        testClass <- sapply(test$G3, discretiserGrades)
+        ka <- input$k
 
         pred <- knn(train[, -ncol(df_encoded)],test[, -ncol(df_encoded)],trainClass,k=ka)
         acc_valid[b] <- mean(pred==testClass)
       }
-      boxplot(acc_valid,main="Accuracy lors des 10-fold cross validation")
+
+      plot_ly(y = acc_valid, type = 'box')
+      # boxplot(acc_valid,main="Accuracy lors des 10-fold cross validation")
     })
-    output$ROC = renderPlot({
+
+    output$ROC <- renderPlot({
       smp_size <- floor(0.75 * nrow(df_encoded))
       tr <- sample(1:nrow(df_encoded),smp_size)
-      
-     
+
       train <- df_encoded[tr,]
-      trainClass = sapply(train$G3, binarise)
+      trainClass <- sapply(train$G3, binarise)
       test <- df_encoded[-tr,]
-      testClass = sapply(test$G3, binarise)
+      testClass <- sapply(test$G3, binarise)
       
       prob <- rep(NA, nrow(test))
-      ka = input$k
+      ka <- input$k
       res <- knn(train[, -ncol(df_encoded)],test[, -ncol(df_encoded)],trainClass,k=ka, prob=TRUE)
       prob[res==1] <- attr(res,"prob")[res==1]
       prob[res==0] <- 1-attr(res,"prob")[res==0]
-      
+
       pred <- prediction(prob, testClass)
       perf <- performance(pred, "tpr", "fpr")
+
       plot(perf, main="Courbe ROC") #courbe ROC
       abline(a=0, b=1)
-      
     })
-    output$boxplotAcc2 = renderPlot({
+
+    output$boxplotAcc2 <- renderPlotly({
       B <- 10
       acc_valid <- rep(NA,10)
       
@@ -559,7 +600,11 @@ server <- function(input, output) {
         pred <- ifelse(prob > 0.5, 1, 0)
         acc_valid[b] <- mean(pred==testClass)
       }
-      boxplot(acc_valid,main="Accuracy lors des 10-fold cross validation")
+
+      p <- plot_ly(y = acc_valid, type = 'box')
+
+      return(p)
+      # boxplot(acc_valid,main="Accuracy lors des 10-fold cross validation")
     })
     
     
