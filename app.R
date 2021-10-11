@@ -8,6 +8,7 @@ library(class)
 library(dplyr)
 library(magrittr)
 library(factoextra)
+library(ggbiplot)
 
 # Reading data 
 thematic::thematic_shiny(font = "auto")
@@ -225,6 +226,13 @@ ui <- fluidPage( theme = bs_theme(bootswatch = "flatly", base_font = font_google
                                                )
                                              )
                                            )
+                                  ),
+                                  tabPanel('Principal Component Analysis',
+                                         mainPanel(
+                                           fluidRow(
+                                             column(12, plotOutput(outputId = "pca_plot"))
+                                           )
+                                         )
                                   )
                                 )
                        )
@@ -476,6 +484,15 @@ server <- function(input, output) {
       km.res <- kmeans(df, input$nb_clusters, nstart = 25)
 
       fviz_cluster(km.res, df, ellipse.type = "norm")
+    })
+
+    output$pca_plot <- renderPlot({
+      df <- df[, ! names(df) %in% categorical]
+
+      pca <- prcomp(df, center = TRUE, scale = TRUE)
+
+      # Only keeping PC1 & PC2
+      ggbiplot(pca, labels = rownames(df))
     })
     
     output$boxplotAcc = renderPlot({
