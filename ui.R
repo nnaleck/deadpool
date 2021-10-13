@@ -1,16 +1,3 @@
-library(bslib)
-library(plotly)
-source('bootstrap.R')
-# Defining categorical variables
-categorical <- c('school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu', 'Fedu',
-                 'Mjob', 'Fjob', 'reason', 'guardian', 'traveltime', 'studytime',
-                 'failures', 'schoolsup', 'famsup', 'paid', 'activities', 'nursery',
-                 'higher', 'internet', 'romantic', 'famrel', 'freetime', 'goout', 'Dalc',
-                 'Walc', 'health')
-
-# Defining quantitative variables
-quantitative <- setdiff(names(df), categorical)
-
 deadpoolUI <- shinyUI({
     fluidPage(
         theme = bs_theme(bootswatch = "flatly", base_font = font_google("PT Serif", local = TRUE)),

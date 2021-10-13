@@ -1,7 +1,5 @@
-# Loading libraries
-library(shiny)
-
 # Loading project files
+source('bootstrap.R')
 source('ui.R')
 source('server.R')
 

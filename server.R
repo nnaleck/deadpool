@@ -1,18 +1,4 @@
-library(reshape2)
-library(ROCR)
-library(class)
-library(dplyr)
-library(readxl)
-library(ROCR)
-library(pROC)
-library(class)
-library(dplyr)
-library(magrittr)
-library(factoextra)
-library(ggbiplot)
-library(plotly)
-
-source('bootstrap.R')
+# Loading files containing application logic
 source('univariate.R')
 source('bivariate.R')
 
