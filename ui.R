@@ -130,16 +130,20 @@ deadpoolUI <- shinyUI({
                 )
             ),
             tabPanel(
-                "Supervised learning",
+                "Supervised Learning",
                 h4("Travail realisé par Ilyes Kamel, Abdelkarim Azzaz et Achraf Louiza"),
                 tabsetPanel(
                     tabPanel(
-                        "KNNs",
+                        "Classification: succeed or fail",
                         sidebarLayout(
                             sidebarPanel(
+                                h3('K Nearest neighbors'),
+                                textOutput(outputId = 'classif_info'),
+                                br(),
+                                br(),
                                 sliderInput(
                                     'k',
-                                    'Select the Number K of Nearest Neighbours',
+                                    strong('Select the Number K of Nearest Neighbours'),
                                     value = 6,
                                     min = 1,
                                     max = 100
@@ -147,19 +151,36 @@ deadpoolUI <- shinyUI({
                             ),
                             mainPanel(
                                 fluidRow(
+                                    column(6, plotOutput(outputId = "ROC")),
                                     column(6, plotlyOutput(outputId = "boxplotAcc"))
-                                ),
-                                column(6, plotOutput(outputId = "ROC"))
+                                )
+                                #,fluidRow(
+                                #    column(6, plotlyOutput(outputId = "boxplotAcc2")),
+                                
+                                #)
                             )
                         )
                     ),
                     tabPanel(
-                        "Logistic regression",
-                        fluidRow(
-                            column(12, plotlyOutput(outputId = "boxplotAcc2"))
+                        "Multi-linear regression: Grade prediction",
+                        sidebarLayout(
+                            sidebarPanel(
+                                h3('Linear regression'),
+                                textOutput(outputId = 'regr_info')
+                            ),
+                            mainPanel(
+                                fluidRow(
+                                    column(6, plotlyOutput(outputId = "boxplotRMSE")),
+                                    column(6, plotlyOutput(outputId = "barplot_diff"))
+                                )
+                                #,fluidRow(
+                                #    column(6, plotlyOutput(outputId = "boxplotAcc2")),
+                                
+                                #)
+                            )
                         )
                     )
-                ),
+                )
             ),
             tabPanel(
                 'Unsupervised Learning',

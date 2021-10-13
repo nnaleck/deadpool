@@ -221,26 +221,27 @@ deadpoolServer <- function(input, output) {
     output$boxplotAcc <- renderPlotly({
         B <- 10
         acc_valid <- rep(NA,10)
-
+        
         for (b in 1:B)
         {
             smp_size <- floor(0.75 * nrow(df_encoded))
-            tr <- sample(seq_len(nrow(df_encoded)), smp_size)
-
+            tr <- sample(1:nrow(df_encoded),smp_size)
+            
             train <- df_encoded[tr,]
             trainClass <- sapply(train$G3, discretizeGrades)
             test <- df_encoded[-tr,]
             testClass <- sapply(test$G3, discretizeGrades)
             ka <- input$k
-
+            
             pred <- knn(train[, -ncol(df_encoded)],test[, -ncol(df_encoded)],trainClass,k=ka)
             acc_valid[b] <- mean(pred==testClass)
         }
-
-        plot_ly(y = acc_valid, type = 'box')
+        
+        fig <- plot_ly(y = acc_valid, type = 'box', name='accuracy (succeed or fail)')
+        fig <- fig %>% layout(title = "Knn validation accuracy (10-fold CV)")
         # boxplot(acc_valid,main="Accuracy lors des 10-fold cross validation")
     })
-
+    
     output$ROC <- renderPlot({
         smp_size <- floor(0.75 * nrow(df_encoded))
         tr <- sample(1:nrow(df_encoded),smp_size)
@@ -291,4 +292,50 @@ deadpoolServer <- function(input, output) {
         return(p)
         # boxplot(acc_valid,main="Accuracy lors des 10-fold cross validation")
     })
+    
+    output$boxplotRMSE <- renderPlotly({
+        B <- 10
+        rmse_valid <- rep(NA,10)
+        
+        for (b in 1:B)
+        {
+            smp_size <- floor(0.75 * nrow(df_encoded))
+            tr <- sample(1:nrow(df_encoded),smp_size)
+            
+            train <- df_encoded[tr,]
+            test <- df_encoded[-tr,]
+            
+            model = lm(G3~., data=train)
+            pred = predict(model, newdata = test)
+            rmse_valid[b] <- sqrt(sum((exp(pred1) - test$G3)^2)/length(test$G3))
+        }
+        
+        fig <- plot_ly(y = rmse_valid, type = 'box', name='rmse on grade prediction')
+        fig <- fig %>% layout(title = "Linear regression validation RMSE (10-fold CV)")
+        # boxplot(acc_valid,main="Accuracy lors des 10-fold cross validation")
+        
+    })
+    output$regr_info <- renderPrint({
+        "In this section, we will try to predict a student grade using linear regression using not only quantitative variables but also encoded qualitative variables. Here is the RMSE result in the 10 fold cross validation!"
+    })
+    
+    output$barplot_diff <- renderPlotly({
+        set.seed(1)
+        row.number <- sample(1:nrow(df), 0.65*nrow(df))
+        train = df_encoded[row.number,]
+        test = df_encoded[-row.number,]
+        model = lm(G3~., data = train)
+        pred = predict(model, newdata = test)
+        diff = pred - test$G3
+        fig <- plot_ly(x = 1:11, y = diff[1:11], type = 'bar', name = 'student index')
+        fig <- fig %>% layout(title = '(PREDICTION - REAL GRADE) of 10 students', 
+                              xaxis = list(title = 'Student ID'), 
+                              yaxis = list(title = 'prediction - real_grade'))
+        return (fig)
+        
+    })
+    output$classif_info <- renderPrint({
+        "We have discretized the marks column into two modalities: (succeed, fail). The idea behind this is to predict either a student will fail or succeed in Mathematics and portuguese. To do so, we will use K nearest neighbors as a mere example"
+    })
+    
 }
