@@ -65,7 +65,7 @@ deadpoolUI <- shinyUI({
                                                  column(4, offset = 3, textOutput("correlation"))
                                              )
                                          ),
-                                         column(6, plotlyOutput(outputId = "histogrammeMod"))
+                                         column(6, plotlyOutput(outputId = "bivariateBoxplot"))
                                      )
                                  )
                              )
@@ -90,8 +90,8 @@ deadpoolUI <- shinyUI({
                             ),
                             mainPanel(
                                 fluidRow(
-                                    column(6, plotlyOutput(outputId = "piechartYes")),
-                                    column(6, plotlyOutput(outputId = "mboxplots"))
+                                    column(6, plotlyOutput(outputId = "qualitativeHistogramG3")),
+                                    column(6, plotlyOutput(outputId = "qualitativeBoxplotsG3"))
                                 )
                             )
                         )
@@ -109,11 +109,11 @@ deadpoolUI <- shinyUI({
                             ),
                             mainPanel(
                                 fluidRow(
-                                    column(12, plotlyOutput(outputId = "gradesCorrP"))
+                                    column(12, plotlyOutput(outputId = "quantitativeCloudPointsG3"))
                                 ),
                                 fluidRow(
-                                    column(4, offset = 3, textOutput("gradesCorr")),
-                                    column(8, plotlyOutput(outputId = "boxplots"))
+                                    column(4, offset = 3, textOutput("quantitativeCorrG3")),
+                                    column(8, plotlyOutput(outputId = "quantitativeBoxplotsG3"))
                                 )
                             )
                         )
@@ -130,7 +130,7 @@ deadpoolUI <- shinyUI({
                 )
             ),
             tabPanel(
-                "Apprentissage supervisé",
+                "Supervised learning",
                 h4("Travail realisé par Ilyes Kamel, Abdelkarim Azzaz et Achraf Louiza"),
                 tabsetPanel(
                     tabPanel(

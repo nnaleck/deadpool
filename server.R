@@ -92,14 +92,10 @@ deadpoolServer <- function(input, output) {
 
     # Correlation
     output$correlation <- renderText({
-        if(
-            ! is.numeric(df[, input$bivariateFirstFeature])
-            |
-            ! is.numeric(df[, input$bivariateSecondFeature])
-        ) return(NULL)
-
-        coeff_correlation.tmp <- cov(df[, input$bivariateFirstFeature], df[, input$bivariateSecondFeature])/(sqrt(var(df[, input$bivariateFirstFeature])*var(df[, input$bivariateSecondFeature])))
-        paste('Coeff de corrélation linéaire = ', round(coeff_correlation.tmp, digits=2))
+        computeCorrelation(
+            input$bivariateFirstFeature,
+            input$bivariateSecondFeature
+        )
     })
 
     output$heatmapCorrelation <- renderPlot({
@@ -109,59 +105,85 @@ deadpoolServer <- function(input, output) {
         heatmap(corrMatrix.tmp)
     })
 
-    output$histogrammeMod <- renderPlotly({
-        if( is.numeric(df[, input$bivariateFirstFeature]) & is.numeric(df[, input$bivariateSecondFeature])){
-            columns <- c(input$bivariateFirstFeature, input$bivariateSecondFeature)
-            # Reshape data()
-            data.stack <- melt(df[, columns], measure.vars = columns)
-            # Boxplot élaborée
-            p <- qplot(x = data.stack[,1], y = data.stack[,2],
-                       xlab = "Modalités", ylab = "Mesures",
-                       geom=c("boxplot"), fill=data.stack[,1]) +
-                theme(legend.title=element_blank())
-
-            return(ggplotly(p))
-        }
-        if ( is.numeric(df[, input$bivariateFirstFeature]) & !is.numeric(df[, input$bivariateSecondFeature])){
-
-            p <- qplot(x = df[, input$bivariateSecondFeature], y = df[, input$bivariateFirstFeature],
-                       xlab = "Modalités", ylab = "Mesures",
-                       geom=c("boxplot"), fill=df[, input$bivariateSecondFeature]) +
-                theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
-
-            return(ggplotly(p))
-        }
-        if ( !is.numeric(df[, input$bivariateFirstFeature]) & is.numeric(df[, input$bivariateSecondFeature])){
-            p <- ggplot(data=df)+
-                geom_boxplot(mapping = aes_string(input$bivariateFirstFeature, input$bivariateSecondFeature))+
-                xlab(label = input$bivariateFirstFeature)+
-                ylab(label=input$bivariateSecondFeature)+
-                theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
-
-            return(ggplotly(p))
-        }
-
+    # Bivariate analysis boxplot plot
+    output$bivariateBoxplot <- renderPlotly({
+        bivariateBoxPlot(
+            input$bivariateFirstFeature,
+            input$bivariateSecondFeature
+        )
     })
 
-    output$piechartYes <- renderPlotly({
-        p <- ggplot(data=df)+
-            geom_histogram(mapping = aes_string('G3', fill=input$selectqual), bins = 10)+
-            xlab(label = 'Final grade')+
-            ylab(label="Frequency")+
-            theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+    # Histogram of a qualitative feature according to final grade.
+    output$qualitativeHistogramG3 <- renderPlotly({
+        p <- ggplot(data=df) +
+            geom_histogram(
+                mapping = aes_string('G3', fill=input$selectqual),
+                bins = 10
+            ) +
+            xlab(label = 'Final grade') +
+            ylab(label = "Frequency") +
+            theme(axis.text.x = element_text(angle=90,hjust=1,vjust=0.5))
 
         return(ggplotly(p))
     })
 
-    output$mboxplots <- renderPlotly({
-        p <- qplot(x = df[, input$selectqual], y = df[, "G3"],
-                   xlab = paste("Modalités de", input$selectqual, sep=" "), ylab = "Final grade",
-                   geom=c("boxplot","jitter"), fill= df[, input$selectqual]) +
-            theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+    # Boxplot of a qualitative feature according to final grade.
+    output$qualitativeBoxplotsG3 <- renderPlotly({
+        p <- qplot(
+            x = df[, input$selectqual],
+            y = df[, "G3"],
+            xlab = paste("Modalités de", input$selectqual, sep=" "),
+            ylab = "Final grade",
+            geom=c("boxplot","jitter"),
+            fill= df[, input$selectqual]
+        ) + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
 
         return(ggplotly(p))
     })
 
+    # Cloud points of a quantitative feature according to final grade.
+    output$quantitativeCloudPointsG3 <- renderPlotly({
+        p <- plot_ly(
+            x = df[, input$selectquant],
+            y = df[, 'G3'],
+            name = paste('Final grade according to', input$selectquant),
+            type = 'scatter',
+            mode = 'markers'
+        )
+
+        p <- p %>% add_trace(
+            x = df[, input$selectquant],
+            y = fitted(lm(df[, 'G3']~df[, input$selectquant])),
+            mode = 'lines',
+            name = 'Linear model'
+        )
+
+        return(p)
+    })
+
+    # Correlation factor of a quantitative feature according to final grade.
+    output$quantitativeCorrG3 <- renderText({
+        computeCorrelation('G3', input$selectquant)
+    })
+
+    # Boxplot of a quantitative feature according to final grade.
+    output$quantitativeBoxplotsG3 <- renderPlotly({
+        columns <- c('G3', input$selectquant)
+
+        # Reshape data()
+        data.stack <- melt(df[, columns], measure.vars = columns)
+
+        p <- qplot(
+            x = data.stack[,1],
+            y = data.stack[,2],
+            xlab = "Modalités",
+            ylab = "Mesures",
+            geom= "boxplot",
+            fill=data.stack[, 1]
+        ) + theme(legend.title=element_blank())
+
+        return(ggplotly(p))
+    })
 
     output$yearsNum <- renderPlotly({
         df_tmp <- data.frame(df)
@@ -187,43 +209,6 @@ deadpoolServer <- function(input, output) {
         return(ggplotly(p))
     })
 
-    output$gradesCorrP <- renderPlotly({
-        p <- plot_ly(
-            x = df[, input$selectquant],
-            y = df[, 'G3'],
-            name=paste('Final grade with regards to ', input$selectquant),
-            type = 'scatter',
-            mode = 'markers'
-        )
-
-        p <- p %>% add_trace(
-            x = df[, input$selectquant],
-            y = fitted(lm(df[, 'G3']~df[, input$selectquant])),
-            mode = 'lines',
-            name = 'Linear model'
-        )
-
-        return(p)
-    })
-
-    output$gradesCorr <- renderText({
-        coeff_correlation.tmp <- cov(df$G3, df[, input$selectquant])/(sqrt(var(df$G3)*var(df[, input$selectquant])))
-        paste('Coeff de corrélation linéaire = ', round(coeff_correlation.tmp, digits=2))
-    })
-
-    output$boxplots <- renderPlotly({
-        columns = c('G3', input$selectquant)
-        # Reshape data()
-        data.stack <- melt(df[, columns], measure.vars = columns)
-        # Boxplot élaborée
-        p <- qplot(x = data.stack[,1], y = data.stack[,2],
-                   xlab = "Modalités", ylab = "Mesures",
-                   geom=c("boxplot"), fill=data.stack[,1]) +
-            theme(legend.title=element_blank())
-
-        return(ggplotly(p))
-    })
-
     output$clustering_plot <- renderPlot({
         # Keeping only continuous variables
         df <- df[, ! names(df) %in% categorical]
@@ -240,7 +225,7 @@ deadpoolServer <- function(input, output) {
         for (b in 1:B)
         {
             smp_size <- floor(0.75 * nrow(df_encoded))
-            tr <- sample(1:nrow(df_encoded),smp_size)
+            tr <- sample(seq_len(nrow(df_encoded)), smp_size)
 
             train <- df_encoded[tr,]
             trainClass <- sapply(train$G3, discretizeGrades)
