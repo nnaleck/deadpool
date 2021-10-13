@@ -1,3 +1,5 @@
+source('bootstrap.R')
+
 deadpoolUI <- shinyUI({
     fluidPage(
         theme = bs_theme(bootswatch = "flatly", base_font = font_google("PT Serif", local = TRUE)),
