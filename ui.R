@@ -1,6 +1,6 @@
 library(bslib)
 library(plotly)
-
+source('bootstrap.R')
 # Defining categorical variables
 categorical <- c('school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu', 'Fedu',
                  'Mjob', 'Fjob', 'reason', 'guardian', 'traveltime', 'studytime',
