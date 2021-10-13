@@ -1,5 +1,35 @@
+library(reshape2)
+library(ROCR)
+library(class)
+library(dplyr)
+library(readxl)
+library(ROCR)
+library(pROC)
+library(class)
+library(dplyr)
+library(magrittr)
+library(factoextra)
+library(ggbiplot)
+library(plotly)
+
+source('bootstrap.R')
 source('univariate.R')
 source('bivariate.R')
+
+# Factorizing categorical variables
+for (col in categorical){
+    df[, col] <- as.factor(df[, col])
+}
+
+# Defining categorical variables
+categorical <- c('school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu', 'Fedu',
+                 'Mjob', 'Fjob', 'reason', 'guardian', 'traveltime', 'studytime',
+                 'failures', 'schoolsup', 'famsup', 'paid', 'activities', 'nursery',
+                 'higher', 'internet', 'romantic', 'famrel', 'freetime', 'goout', 'Dalc',
+                 'Walc', 'health')
+
+# Defining quantitative variables
+quantitative <- setdiff(names(df), categorical)
 
 deadpoolServer <- function(input, output) {
     output$table <- renderDataTable({df})
@@ -26,7 +56,7 @@ deadpoolServer <- function(input, output) {
     output$dictionary <- renderTable({
         dict
     })
-
+    
     output$datasetSummary <- renderPrint({
         "This data approach student achievement in secondary education of two Portuguese schools. The data attributes include student grades, demographic, social and school-related features) and it was collected by using school reports and questionnaires. Two datasets are provided regarding the performance in two distinct subjects: Mathematics (mat) and Portuguese language (por). In [Cortez and Silva, 2008], the two datasets were modeled under binary/five-level classification and regression tasks. Important note: the target attribute G3 has a strong correlation with attributes G2 and G1. This occurs because G3 is the final year grade (issued at the 3rd period), while G1 and G2 correspond to the 1st and 2nd period grades. It is more difficult to predict G3 without G2 and G1, but such prediction is much more useful (see paper source for more details)."
     })
@@ -215,17 +245,6 @@ deadpoolServer <- function(input, output) {
         km.res <- kmeans(df, input$nb_clusters, nstart = 25)
 
         fviz_cluster(km.res, df, ellipse.type = "norm")
-    })
-
-    output$pca_plot <- renderPlotly({
-        df <- df[, ! names(df) %in% categorical]
-
-        pca <- prcomp(df, center = TRUE, scale = TRUE)
-
-        # Only keeping PC1 & PC2
-        p <- ggbiplot(pca, labels = rownames(df))
-
-        return(ggplotly(p))
     })
 
     output$boxplotAcc <- renderPlotly({

@@ -1,11 +1,6 @@
 # Using custom shiny theme
 thematic::thematic_shiny(font = "auto")
 
-# Reading dataset(s)
-df <- read.csv("student-mat.csv")
-df_encoded <- read.csv("df_encoded.csv")
-dict <- read_excel("data_dictionary.xlsx")
-
 # Defining categorical variables
 categorical <- c('school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu', 'Fedu',
                  'Mjob', 'Fjob', 'reason', 'guardian', 'traveltime', 'studytime',
@@ -13,13 +8,18 @@ categorical <- c('school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu'
                  'higher', 'internet', 'romantic', 'famrel', 'freetime', 'goout', 'Dalc',
                  'Walc', 'health')
 
-# Defining quantitative variables
-quantitative <- setdiff(names(df), categorical)
+# Reading dataset(s)
+df <- read.csv("student-mat.csv")
+df_encoded <- read.csv("df_encoded.csv")
+dict <- read_excel("data_dictionary.xlsx")
 
 # Factorizing categorical variables
 for (col in categorical){
     df[, col] <- as.factor(df[, col])
 }
+    
+# Defining quantitative variables
+quantitative <- setdiff(names(df), categorical)
 
 # Helper functions
 discretize <- function(x) {
@@ -51,3 +51,4 @@ binarize <- function(x)
 {
     if (x<10) return("0") else return("1")
 }
+

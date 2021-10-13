@@ -1,3 +1,16 @@
+library(bslib)
+library(plotly)
+
+# Defining categorical variables
+categorical <- c('school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu', 'Fedu',
+                 'Mjob', 'Fjob', 'reason', 'guardian', 'traveltime', 'studytime',
+                 'failures', 'schoolsup', 'famsup', 'paid', 'activities', 'nursery',
+                 'higher', 'internet', 'romantic', 'famrel', 'freetime', 'goout', 'Dalc',
+                 'Walc', 'health')
+
+# Defining quantitative variables
+quantitative <- setdiff(names(df), categorical)
+
 deadpoolUI <- shinyUI({
     fluidPage(
         theme = bs_theme(bootswatch = "flatly", base_font = font_google("PT Serif", local = TRUE)),
@@ -141,8 +154,7 @@ deadpoolUI <- shinyUI({
                                     value = 6,
                                     min = 1,
                                     max = 100
-                                ),
-                                checkboxInput('balance', label = "Balance data (only for training)")
+                                )            
                             ),
                             mainPanel(
                                 fluidRow(
@@ -154,7 +166,6 @@ deadpoolUI <- shinyUI({
                     ),
                     tabPanel(
                         "Logistic regression",
-                        checkboxInput('balance2', label = "Balance data (only for training)"),
                         fluidRow(
                             column(12, plotlyOutput(outputId = "boxplotAcc2"))
                         )
@@ -165,7 +176,7 @@ deadpoolUI <- shinyUI({
                 'Unsupervised Learning',
                 tabsetPanel(
                     tabPanel(
-                        'KMeans Clustering',
+                        'KMeans Clustering + PCA (2-dim)',
                         sidebarLayout(
                             sidebarPanel(
                                 sliderInput(
@@ -180,14 +191,6 @@ deadpoolUI <- shinyUI({
                                 fluidRow(
                                     column(12, plotOutput(outputId = "clustering_plot"))
                                 )
-                            )
-                        )
-                    ),
-                    tabPanel(
-                        'Principal Component Analysis',
-                        mainPanel(
-                            fluidRow(
-                                column(12, plotlyOutput(outputId = "pca_plot"))
                             )
                         )
                     )
