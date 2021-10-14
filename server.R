@@ -307,7 +307,7 @@ deadpoolServer <- function(input, output) {
             
             model = lm(G3~., data=train)
             pred = predict(model, newdata = test)
-            rmse_valid[b] <- sqrt(sum((exp(pred1) - test$G3)^2)/length(test$G3))
+            rmse_valid[b] <- sqrt(sum((exp(pred) - test$G3)^2)/length(test$G3))
         }
         
         fig <- plot_ly(y = rmse_valid, type = 'box', name='rmse on grade prediction')
