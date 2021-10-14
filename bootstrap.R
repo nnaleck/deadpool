@@ -41,21 +41,22 @@ quantitative <- setdiff(names(df), categorical)
 # Helper functions
 discretize <- function(x) {
     start <- 0
-    end <- 2
+    end <- 4
 
     while(TRUE)
     {
-        if (x <= end)
+        if (x < end)
         {
-            name <- paste('Tenure_', start)
-            name <- paste(name, '-')
-            name <- paste(name, end)
+            name <- paste('Absence[', start)
+            name <- paste(name, end, sep=',')
+            name <- paste(name, ']')
+            
 
             return(name)
         }
 
-        start <- start + 2
-        end <- end + 2
+        start <- start + 4
+        end <- end + 4
     }
 }
 

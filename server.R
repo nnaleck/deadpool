@@ -189,11 +189,11 @@ deadpoolServer <- function(input, output) {
     output$absenceHistogram <- renderPlotly({
         df_tmp <- data.frame(df)
         tenure <- sapply(df$absences, discretize)
-        df_tmp$Tenure <- tenure
-
+        df_tmp$absences <- tenure
+        df_tmp = df_tmp[order(df_tmp$absences),]
         p <- ggplot(
                 df_tmp,
-                aes_string(x = 'G3' , fill='Tenure')
+                aes_string(x = 'G3' , fill='absences')
             ) +
             geom_histogram() +
             theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)) +
@@ -206,10 +206,11 @@ deadpoolServer <- function(input, output) {
     output$absenceBoxplot <- renderPlotly({
         df_tmp <- data.frame(df)
         tenure <- sapply(df$absences, discretize)
-        df_tmp$Tenure <- tenure
+        df_tmp$absences <- tenure
+        df_tmp = df_tmp[order(df_tmp$absences),]
 
         p <- qplot(
-            x = df_tmp$Tenure,
+            x = df_tmp$absences,
             y = df_tmp$G3,
             xlab = "Modalités",
             ylab = "Final grade(G3)",
