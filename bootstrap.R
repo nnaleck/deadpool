@@ -26,9 +26,9 @@ categorical <- c('school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu'
                  'Walc', 'health')
 
 # Reading dataset(s)
-df <- read.csv("student-mat.csv")
-df_encoded <- read.csv("df_encoded.csv")
-dict <- read_excel("data_dictionary.xlsx")
+df <- read.csv("datasets/student-mat.csv")
+df_encoded <- read.csv("datasets/df_encoded.csv")
+dict <- read_excel("datasets/data_dictionary.xlsx")
 
 # Factorizing categorical variables
 for (col in categorical){

@@ -1,3 +1,0 @@
-- Clustering K-means + ACP(2dim) + nuage de points
-- Amélioration de la gui
-- upgrade graphes (+ d'interactives)

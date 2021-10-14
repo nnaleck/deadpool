@@ -119,12 +119,12 @@ deadpoolUI <- shinyUI({
                         )
                     ),
                     tabPanel(
-                        "Analyse according to tenure",
+                        "Analysis according to absence",
                         fluidRow(
-                            column(12, plotlyOutput(outputId = "yearsNum")),
+                            column(12, plotlyOutput(outputId = "absenceHistogram")),
                         ),
                         fluidRow(
-                            column(12, plotlyOutput(outputId = "yearsInc"))
+                            column(12, plotlyOutput(outputId = "absenceBoxplot"))
                         )
                     )
                 )
@@ -134,7 +134,7 @@ deadpoolUI <- shinyUI({
                 h4("Travail realisé par Ilyes Kamel, Abdelkarim Azzaz et Achraf Louiza"),
                 tabsetPanel(
                     tabPanel(
-                        "Classification: succeed or fail",
+                        "Classification: succeeded or failed",
                         sidebarLayout(
                             sidebarPanel(
                                 h3('K Nearest neighbors'),
@@ -152,7 +152,7 @@ deadpoolUI <- shinyUI({
                             mainPanel(
                                 fluidRow(
                                     column(6, plotOutput(outputId = "ROC")),
-                                    column(6, plotlyOutput(outputId = "boxplotAcc"))
+                                    column(6, plotlyOutput(outputId = "accuracyBoxplot"))
                                 )
                                 #,fluidRow(
                                 #    column(6, plotlyOutput(outputId = "boxplotAcc2")),
@@ -186,7 +186,7 @@ deadpoolUI <- shinyUI({
                 'Unsupervised Learning',
                 tabsetPanel(
                     tabPanel(
-                        'KMeans Clustering + PCA (2-dim)',
+                        'PCA (2-dim) + KMeans Clustering',
                         sidebarLayout(
                             sidebarPanel(
                                 sliderInput(

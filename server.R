@@ -1,6 +1,6 @@
 # Loading files containing application logic
-source('univariate.R')
-source('bivariate.R')
+source('logic/univariate.R')
+source('logic/bivariate.R')
 
 # Factorizing categorical variables
 for (col in categorical){
@@ -185,30 +185,190 @@ deadpoolServer <- function(input, output) {
         return(ggplotly(p))
     })
 
-    output$yearsNum <- renderPlotly({
+    # Histogram of absences according to final grade.
+    output$absenceHistogram <- renderPlotly({
         df_tmp <- data.frame(df)
         tenure <- sapply(df$absences, discretize)
         df_tmp$Tenure <- tenure
-        p <- ggplot(df_tmp, aes_string(x = 'G3' , fill='Tenure')) +
+
+        p <- ggplot(
+                df_tmp,
+                aes_string(x = 'G3' , fill='Tenure')
+            ) +
             geom_histogram() +
-            theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+
+            theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)) +
             labs(title= paste("Tenure groups count"))
 
         return(ggplotly(p))
     })
 
-    output$yearsInc <- renderPlotly({
+    # Boxplots of absences according to final grade.
+    output$absenceBoxplot <- renderPlotly({
         df_tmp <- data.frame(df)
         tenure <- sapply(df$absences, discretize)
         df_tmp$Tenure <- tenure
-        p <- qplot(x = df_tmp$Tenure, y = df_tmp$G3,
-                   xlab = "Modalités", ylab = "Final grade(G3)",
-                   geom=c("boxplot"), fill=df_tmp$Tenure) +
-            theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+        p <- qplot(
+            x = df_tmp$Tenure,
+            y = df_tmp$G3,
+            xlab = "Modalités",
+            ylab = "Final grade(G3)",
+            geom = "boxplot",
+            fill=df_tmp$Tenure
+        ) + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
 
         return(ggplotly(p))
     })
 
+    # KNN Accuracy boxplot
+    output$accuracyBoxplot <- renderPlotly({
+        B <- 10
+        acc_valid <- rep(NA,10)
+        
+        for (b in 1:B)
+        {
+            smp_size <- floor(0.75 * nrow(df_encoded))
+            tr <- sample(seq_len(nrow(df_encoded)), smp_size)
+            
+            train <- df_encoded[tr,]
+            trainClass <- sapply(train$G3, discretizeGrades)
+
+            test <- df_encoded[-tr,]
+            testClass <- sapply(test$G3, discretizeGrades)
+
+            ka <- input$k
+            
+            pred <- knn(
+                train[, -ncol(df_encoded)],
+                test[, -ncol(df_encoded)],
+                trainClass,
+                k=ka
+            )
+            acc_valid[b] <- mean(pred==testClass)
+        }
+        
+        fig <- plot_ly(y = acc_valid, type = 'box', name='accuracy (succeed or fail)')
+        fig <- fig %>% layout(title = "KNN validation accuracy (10-fold CV)")
+
+        return(fig)
+    })
+
+    # KNN ROC Curve plot.
+    output$ROC <- renderPlot({
+        smp_size <- floor(0.75 * nrow(df_encoded))
+        tr <- sample(seq_len(nrow(df_encoded)), smp_size)
+
+        train <- df_encoded[tr,]
+        trainClass <- sapply(train$G3, binarize)
+
+        test <- df_encoded[-tr,]
+        testClass <- sapply(test$G3, binarize)
+
+        prob <- rep(NA, nrow(test))
+        ka <- input$k
+
+        res <- knn(
+            train[, -ncol(df_encoded)],
+            test[, -ncol(df_encoded)],
+            trainClass,
+            k=ka,
+            prob=TRUE
+        )
+
+        prob[res==1] <- attr(res,"prob")[res==1]
+        prob[res==0] <- 1 - attr(res,"prob")[res==0]
+
+        pred <- prediction(prob, testClass)
+        perf <- performance(pred, "tpr", "fpr")
+
+        plot(perf, main="ROC Curve")
+        abline(a=0, b=1)
+    })
+
+    # output$boxplotAcc2 <- renderPlotly({
+    #     B <- 10
+    #     acc_valid <- rep(NA,10)
+    #
+    #     for (b in 1:10)
+    #     {
+    #         smp_size <- floor(0.75 * nrow(df))
+    #         tr <- sample(1:nrow(df),smp_size)
+    #
+    #
+    #         train <- df_encoded[tr,]
+    #         trainClass = sapply(train$G3, binarize)
+    #         test <- df_encoded[-tr,]
+    #         testClass = sapply(test$G3, binarize)
+    #         train = train[, -ncol(df_encoded)]
+    #         train['G3'] = as.numeric(trainClass)
+    #         # Fit the model
+    #         model <- glm(  G3 ~., data = train, family = binomial)
+    #         prob <- model %>% predict(test[, -ncol(df_encoded)], type = "response")
+    #         pred <- ifelse(prob > 0.5, 1, 0)
+    #         acc_valid[b] <- mean(pred==testClass)
+    #     }
+    #
+    #     p <- plot_ly(y = acc_valid, type = 'box')
+    #
+    #     return(p)
+    #     # boxplot(acc_valid,main="Accuracy lors des 10-fold cross validation")
+    # })
+
+    # Linear regression RMSE plot
+    output$boxplotRMSE <- renderPlotly({
+        B <- 10
+        rmse_valid <- rep(NA,10)
+        
+        for (b in 1:B)
+        {
+            smp_size <- floor(0.75 * nrow(df_encoded))
+            tr <- sample(seq_len(nrow(df_encoded)), smp_size)
+            
+            train <- df_encoded[tr,]
+            test <- df_encoded[-tr,]
+            
+            model <- lm(G3~., data=train)
+            pred <- predict(model, newdata = test)
+            rmse_valid[b] <- sqrt(sum((exp(pred) - test$G3)^2)/length(test$G3))
+        }
+        
+        fig <- plot_ly(y = rmse_valid, type = 'box', name='rmse on grade prediction')
+        fig <- fig %>% layout(title = "Linear regression validation RMSE (10-fold CV)")
+
+        return(fig)
+    })
+
+    # Linear regression method description.
+    output$regr_info <- renderPrint({
+        "In this section, we will try to predict a student grade using linear regression using not only quantitative variables but also encoded qualitative variables. Here is the RMSE result in the 10 fold cross validation!"
+    })
+
+    # Plot of difference between predicted and real grades.
+    output$barplot_diff <- renderPlotly({
+        set.seed(1)
+        row.number <- sample(seq_len(nrow(df)), 0.65*nrow(df))
+
+        train <- df_encoded[row.number,]
+        test <- df_encoded[-row.number,]
+
+        model <- lm(G3~., data = train)
+        pred <- predict(model, newdata = test)
+        diff <- pred - test$G3
+
+        fig <- plot_ly(x = 1:11, y = diff[1:11], type = 'bar', name = 'student index')
+        fig <- fig %>% layout(title = '(PREDICTION - REAL GRADE) of 10 students', 
+                              xaxis = list(title = 'Student ID'), 
+                              yaxis = list(title = 'prediction - real_grade'))
+        return (fig)
+        
+    })
+
+    # KNN Classification method description.
+    output$classif_info <- renderPrint({
+        "We have discretized the marks column into two modalities: (succeeded, failed). The idea behind this is to predict either a student will fail or succeed in Mathematics and portuguese. To do so, we will use K nearest neighbors as a mere example"
+    })
+
+    # Unsupervised (clustering) plot.
     output$clustering_plot <- renderPlot({
         # Keeping only continuous variables
         df <- df[, ! names(df) %in% categorical]
@@ -217,125 +377,4 @@ deadpoolServer <- function(input, output) {
 
         fviz_cluster(km.res, df, ellipse.type = "norm")
     })
-
-    output$boxplotAcc <- renderPlotly({
-        B <- 10
-        acc_valid <- rep(NA,10)
-        
-        for (b in 1:B)
-        {
-            smp_size <- floor(0.75 * nrow(df_encoded))
-            tr <- sample(1:nrow(df_encoded),smp_size)
-            
-            train <- df_encoded[tr,]
-            trainClass <- sapply(train$G3, discretizeGrades)
-            test <- df_encoded[-tr,]
-            testClass <- sapply(test$G3, discretizeGrades)
-            ka <- input$k
-            
-            pred <- knn(train[, -ncol(df_encoded)],test[, -ncol(df_encoded)],trainClass,k=ka)
-            acc_valid[b] <- mean(pred==testClass)
-        }
-        
-        fig <- plot_ly(y = acc_valid, type = 'box', name='accuracy (succeed or fail)')
-        fig <- fig %>% layout(title = "Knn validation accuracy (10-fold CV)")
-        # boxplot(acc_valid,main="Accuracy lors des 10-fold cross validation")
-    })
-    
-    output$ROC <- renderPlot({
-        smp_size <- floor(0.75 * nrow(df_encoded))
-        tr <- sample(1:nrow(df_encoded),smp_size)
-
-        train <- df_encoded[tr,]
-        trainClass <- sapply(train$G3, binarize)
-        test <- df_encoded[-tr,]
-        testClass <- sapply(test$G3, binarize)
-
-        prob <- rep(NA, nrow(test))
-        ka <- input$k
-        res <- knn(train[, -ncol(df_encoded)],test[, -ncol(df_encoded)],trainClass,k=ka, prob=TRUE)
-        prob[res==1] <- attr(res,"prob")[res==1]
-        prob[res==0] <- 1-attr(res,"prob")[res==0]
-
-        pred <- prediction(prob, testClass)
-        perf <- performance(pred, "tpr", "fpr")
-
-        plot(perf, main="Courbe ROC") #courbe ROC
-        abline(a=0, b=1)
-    })
-
-    output$boxplotAcc2 <- renderPlotly({
-        B <- 10
-        acc_valid <- rep(NA,10)
-
-        for (b in 1:10)
-        {
-            smp_size <- floor(0.75 * nrow(df))
-            tr <- sample(1:nrow(df),smp_size)
-
-
-            train <- df_encoded[tr,]
-            trainClass = sapply(train$G3, binarize)
-            test <- df_encoded[-tr,]
-            testClass = sapply(test$G3, binarize)
-            train = train[, -ncol(df_encoded)]
-            train['G3'] = as.numeric(trainClass)
-            # Fit the model
-            model <- glm(  G3 ~., data = train, family = binomial)
-            prob <- model %>% predict(test[, -ncol(df_encoded)], type = "response")
-            pred <- ifelse(prob > 0.5, 1, 0)
-            acc_valid[b] <- mean(pred==testClass)
-        }
-
-        p <- plot_ly(y = acc_valid, type = 'box')
-
-        return(p)
-        # boxplot(acc_valid,main="Accuracy lors des 10-fold cross validation")
-    })
-    
-    output$boxplotRMSE <- renderPlotly({
-        B <- 10
-        rmse_valid <- rep(NA,10)
-        
-        for (b in 1:B)
-        {
-            smp_size <- floor(0.75 * nrow(df_encoded))
-            tr <- sample(1:nrow(df_encoded),smp_size)
-            
-            train <- df_encoded[tr,]
-            test <- df_encoded[-tr,]
-            
-            model = lm(G3~., data=train)
-            pred = predict(model, newdata = test)
-            rmse_valid[b] <- sqrt(sum((exp(pred) - test$G3)^2)/length(test$G3))
-        }
-        
-        fig <- plot_ly(y = rmse_valid, type = 'box', name='rmse on grade prediction')
-        fig <- fig %>% layout(title = "Linear regression validation RMSE (10-fold CV)")
-        # boxplot(acc_valid,main="Accuracy lors des 10-fold cross validation")
-        
-    })
-    output$regr_info <- renderPrint({
-        "In this section, we will try to predict a student grade using linear regression using not only quantitative variables but also encoded qualitative variables. Here is the RMSE result in the 10 fold cross validation!"
-    })
-    
-    output$barplot_diff <- renderPlotly({
-        set.seed(1)
-        row.number <- sample(1:nrow(df), 0.65*nrow(df))
-        train = df_encoded[row.number,]
-        test = df_encoded[-row.number,]
-        model = lm(G3~., data = train)
-        pred = predict(model, newdata = test)
-        diff = pred - test$G3
-        fig <- plot_ly(x = 1:11, y = diff[1:11], type = 'bar', name = 'student index')
-        fig <- fig %>% layout(title = '(PREDICTION - REAL GRADE) of 10 students', 
-                              xaxis = list(title = 'Student ID'), 
-                              yaxis = list(title = 'prediction - real_grade'))
-        return (fig)
-        
-    })
-    output$classif_info <- renderPrint({
-        "We have discretized the marks column into two modalities: (succeed, fail). The idea behind this is to predict either a student will fail or succeed in Mathematics and portuguese. To do so, we will use K nearest neighbors as a mere example"
-    })
-    
 }
