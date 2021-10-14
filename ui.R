@@ -169,10 +169,12 @@ deadpoolUI <- shinyUI({
                                 textOutput(outputId = 'regr_info')
                             ),
                             mainPanel(
-                                fluidRow(
-                                    column(6, plotlyOutput(outputId = "boxplotRMSE")),
-                                    column(6, plotlyOutput(outputId = "barplot_diff"))
-                                )
+                                fluidRow(plotlyOutput(outputId = "barplot_diff")),
+                                fluidRow(plotlyOutput(outputId = "boxplotRMSE"))
+                                # fluidRow(
+                                #     column(6, plotlyOutput(outputId = "boxplotRMSE")),
+                                #     column(6, plotlyOutput(outputId = "barplot_diff"))
+                                # )
                                 #,fluidRow(
                                 #    column(6, plotlyOutput(outputId = "boxplotAcc2")),
                                 

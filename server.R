@@ -353,14 +353,30 @@ deadpoolServer <- function(input, output) {
 
         model <- lm(G3~., data = train)
         pred <- predict(model, newdata = test)
-        diff <- pred - test$G3
+        # diff <- pred - test$G3
 
-        fig <- plot_ly(x = 1:11, y = diff[1:11], type = 'bar', name = 'student index')
-        fig <- fig %>% layout(title = '(PREDICTION - REAL GRADE) of 10 students', 
-                              xaxis = list(title = 'Student ID'), 
-                              yaxis = list(title = 'prediction - real_grade'))
+        # fig <- plot_ly(x = 1:11, y = diff[1:11], type = 'bar', name = 'student index')
+        # fig <- fig %>% layout(title = '(PREDICTION - REAL GRADE) of 10 students',
+        #                       xaxis = list(title = 'Student ID'),
+        #                       yaxis = list(title = 'prediction - real_grade'))
+
+        fig <- plot_ly(
+            x = seq_len(nrow(test)),
+            y = test$G3,
+            type = 'scatter',
+            mode = 'lines+markers',
+            name = 'Real grade'
+        )
+
+        fig <- fig %>% add_trace(
+            x = seq_along(pred),
+            y = pred,
+            type = 'scatter',
+            mode = 'lines+markers',
+            name = 'Predicted grade'
+        )
+
         return (fig)
-        
     })
 
     # KNN Classification method description.
