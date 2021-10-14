@@ -386,11 +386,9 @@ deadpoolServer <- function(input, output) {
 
     # Unsupervised (clustering) plot.
     output$clustering_plot <- renderPlot({
-        # Keeping only continuous variables
-        df <- df[, ! names(df) %in% categorical]
-
-        km.res <- kmeans(df, input$nb_clusters, nstart = 25)
-
-        fviz_cluster(km.res, df, ellipse.type = "norm")
+        
+        km.res <- kmeans(df_encoded[, -ncol(df_encoded)], input$nb_clusters, nstart = 25)
+        
+        fviz_cluster(km.res, df_encoded[, -ncol(df_encoded)], ellipse.type = "norm")
     })
 }
