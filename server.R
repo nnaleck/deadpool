@@ -446,4 +446,6 @@ deadpoolServer <- function(input, output) {
         
         fviz_cluster(km.res, df_encoded[, -ncol(df_encoded)], ellipse.type = "norm")
     })
+    
+ 
 }

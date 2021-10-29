@@ -2,9 +2,16 @@ source('bootstrap.R')
 
 deadpoolUI <- shinyUI({
     fluidPage(
+        list(tags$head(HTML('<link rel="icon", href="logo.png", 
+                                   type="image/png" />'))),
         theme = bs_theme(bootswatch = "flatly", base_font = font_google("PT Serif", local = TRUE)),
         navbarPage(
-            "Student Grade Prediction",
+            tags$div(tags$img(
+                src = "logo.png",
+                height=40,
+                width=40,
+                style = "margin:10px 10px"
+            ), "Student grade prediction"),
             tabPanel(
                 "Descriptive analysis",
                 tabsetPanel(
