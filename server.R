@@ -274,6 +274,35 @@ deadpoolServer <- function(input, output) {
         return(ggplotly(p))
     })
     
+    # Interpretation of impact of variables on final grade
+    output$gradeConclusions <- renderText({
+        "<h5><b>How does the different attributes affect the students final grade?</b></h5><br/><br/>
+        In this section, we are searching for any form of correlation or, if we are lucky, some form of causation to the final grade.<br/>
+        To get there, we applied a bivariate analysis while fixing the final grade as one of the parameters.<br/><br/>
+        <i><b>We will restrict our analyis on the following traits:</b></i>
+        <ul>
+        <li>Adress (rural or urban area)</li>
+        <li>Alcohol consumption</li>
+        <li>Absences</li>
+        <li>study time</li>
+        </ul>
+        <br/>
+        <b>1. Area type:</b><br/>
+        First of all, the final grade of students living in a rural area has almost the same distribution as the final grade of those living in an urban area.<br/>
+        To illustrate, 4.5% of rural students have a grade higher than 18. Same as urban students with a percentage of 6.5%. We believe that the adresse isn't correlated to final grade!<br/><br/>
+        <b>2. Alcohol consumption:</b><br/>
+        Secondly, alcohol consumption seem to be a very good discriminator of excellent students. Actually, all those who consume alcohol heavily have at most 13 in their final grade.
+        <br/>Those who consume moderately can have good marks but never got more than 18. Only those who don't drink that had exellent grades. <br/> 
+        This is due to the fact that these student are still young. They are in the begining of the adulthood journey so they may lose control over priorities especially with parties and alcohol.<br/><br/> 
+        <b>3. Absences</b><br/>
+        The first thing that we noticed looking at the grade/absences scatter plot is that the students that have many absences are average students. <br/>
+        We can't extract any more information since there is evidently no correlation between these variables. Apparently the students study at home to fill for their absences.<br/><br/> 
+        <b>4. Study time:</b><br/>
+        Hard work doesn't alway pays off! Among those who study at home the most (more than 10 hours per week), you will find almost every grade. <br/>
+        Not only that but we observed that the variance is maximal. The grade can go from 0 to 20 with almost a uniform distribution. This means that working hard alone won't add up to anything.<br/> 
+        You will need most of all passion, a good learning strategy and solid basics!"
+    }) 
+    
     # KNN Accuracy boxplot
     output$accuracyBoxplot <- renderPlotly({
         B <- 10

@@ -131,6 +131,11 @@ deadpoolUI <- shinyUI({
                         fluidRow(
                             column(12, plotlyOutput(outputId = "absenceBoxplot"))
                         )
+                    ),
+                    tabPanel(
+                        "Interpretations",
+                        htmlOutput("gradeConclusions")
+                              
                     )
                 )
             ),
