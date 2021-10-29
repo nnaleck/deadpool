@@ -7,15 +7,15 @@ deadpoolUI <- shinyUI({
             "Student Grade Prediction",
             tabPanel(
                 "Descriptive analysis",
-                h4("Travail realisé par Ilyes Kamel, Abdelkarim Azzaz et Achraf Louiza"),
                 tabsetPanel(
                     tabPanel(
                         "Data summary",
                         fluidRow(
-                            column(6, h3("Student grade prediction dataset"), textOutput(outputId = "datasetSummary")),
-                            column(6, tableOutput(outputId = "dictionary"))
+                            column(6, h3("Data summary"), htmlOutput(outputId = "datasetSummary")),
+                            column(6, h3("Data dictionary"), tags$br(), tableOutput(outputId = "dictionary"))
                         )
                     ),
+                    tabPanel("Table", dataTableOutput("table"), style = "font-size: 85%"),
                     tabPanel(
                         "Univariate analysis",
                         sidebarLayout(
@@ -70,12 +70,17 @@ deadpoolUI <- shinyUI({
                                  )
                              )
                     ),
-                    tabPanel("Table", dataTableOutput("table"), style = "font-size: 85%")
+                    tabPanel(
+                        "Interpretations",
+                        fluidRow(
+                            column(6, htmlOutput(outputId = "uniConclusions")),
+                            column(6, htmlOutput(outputId = "biConclusions"))
+                        )
+                    )
                 )
             ),
             tabPanel(
                 "Variables impact on final Grade",
-                h4("Travail realisé par Ilyes Kamel, Abdelkarim Azzaz et Achraf Louiza"),
                 tabsetPanel(
                     tabPanel(
                         "Qualitative variables",
@@ -131,7 +136,6 @@ deadpoolUI <- shinyUI({
             ),
             tabPanel(
                 "Supervised Learning",
-                h4("Travail realisé par Ilyes Kamel, Abdelkarim Azzaz et Achraf Louiza"),
                 tabsetPanel(
                     tabPanel(
                         "Classification: succeeded or failed",
@@ -208,6 +212,7 @@ deadpoolUI <- shinyUI({
                     )
                 )
             )
+            
         )
     )
 })

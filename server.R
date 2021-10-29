@@ -18,8 +18,11 @@ categorical <- c('school', 'sex', 'age', 'address', 'famsize', 'Pstatus', 'Medu'
 quantitative <- setdiff(names(df), categorical)
 
 deadpoolServer <- function(input, output) {
+    
+    # Table display
     output$table <- renderDataTable({df})
-
+    
+    # Reactive variable giving frequency measures on modalities of qualitative variables
     qualitativeTabStats <- reactive({
         table.tmp <- as.data.frame(table(df[, input$univariateSelect]))
         table.tmp <- cbind(table.tmp, cumsum(table.tmp[[2]]))
@@ -30,7 +33,7 @@ deadpoolServer <- function(input, output) {
                                  "Fréquences", "Fréquences Cum.")
         table.tmp
     })
-
+    
     # Quantitative statistic table
     quantitativeTabStats <- reactive({
         data.frame(
@@ -38,15 +41,24 @@ deadpoolServer <- function(input, output) {
             values = c(quantile(df[, input$univariateSelect]), mean(df[, input$univariateSelect]), sd(df[, input$univariateSelect]))
         )
     })
-
+    
+    # Dataset dictionary import from excel file
     output$dictionary <- renderTable({
         dict
     })
     
-    output$datasetSummary <- renderPrint({
-        "This data approach student achievement in secondary education of two Portuguese schools. The data attributes include student grades, demographic, social and school-related features) and it was collected by using school reports and questionnaires. Two datasets are provided regarding the performance in two distinct subjects: Mathematics (mat) and Portuguese language (por). In [Cortez and Silva, 2008], the two datasets were modeled under binary/five-level classification and regression tasks. Important note: the target attribute G3 has a strong correlation with attributes G2 and G1. This occurs because G3 is the final year grade (issued at the 3rd period), while G1 and G2 correspond to the 1st and 2nd period grades. It is more difficult to predict G3 without G2 and G1, but such prediction is much more useful (see paper source for more details)."
+    # Data summary
+    output$datasetSummary <- renderText({
+        "<p style=\"font-size:120%\">
+        <br/>
+        This data approach student achievement in secondary education of two Portuguese schools. It was actually collected using school reports and questionnaires.<br/><br/>
+        The data attributes include student grades, demographic, social and school-related features. The target attribute is the final grade of mathematics which is represented by G3 <br/><br/>
+        <b>Important note:</b><br/>
+        <i>The target attribute G3 has a strong correlation with attributes G2 and G1. This occurs because G3 is the final year grade (issued at the 3rd period), while G1 and G2 correspond to the 1st and 2nd period grades. It is more difficult to predict G3 without G2 and G1, but such prediction is much more useful (see paper source for more details).</i>
+        </p>"
     })
-
+    
+    # Statistic measures based on variable type
     output$statsTableOut <- renderTable({
         if (is.numeric(df[, input$univariateSelect]))
         {
@@ -57,31 +69,72 @@ deadpoolServer <- function(input, output) {
             qualitativeTabStats()
         }
     })
-
+    
+    # Univariate conclusions
+    output$uniConclusions <- renderText({
+        "<h4><b><center>Students univariate analysis</h4></b></center>  <br/><br/>
+        We have got in our hands a set of students with quite diverse profiles. We will start by analysing theses profiles based on each attribute independently. 
+        <i><b>Let's get to know the students through simple questions!</b></i>  <br/><br/>
+        <b>What is the age of the students?</b>  <br/>
+        Actually, the students age vary from 15 to 22 but only 1% of the students are 20 years old or more and only 6% are 19 years old. Moreover, all the ages from 15 to 18 represent 21% each.
+        Which means that we may have got 3 or 4 consecutif and different schools levels.  <br/><br/>
+        <b>Are the students living in a rural or urban area?</b>  <br/>
+        Well both! Out of a total of 395 students, 307(77.7%) of the students live in an urban area. However 88(22.3%) students live in a rural area. <br/><br/>
+        <b>Do they practice any extracurricular activities?</b>  <br/>
+        Half of them does (50.9%), half doesn't (49.1%). <br/><br/>
+        <b>Have the students failed a class throughout their education?</b>  <br/>
+        Fortunately, 79% of the students have never failed a class. Nevertheless, 12% of the studens have failed a single class in the past and 4%(16) of the students have failed 3 years already.<br/><br/>
+        <b>What about their fathers, is he educated?</b>  <br/>
+        Yes, indeed for the most part. 2 student's fathers aren't educated. However, only 24.3% have higher degrees. All the remaining fathers have a secondary education or less.<br/><br/>
+        <b>Last but not least, how are their grades?</b>  <br/>
+        We got 4 groups of students (with the same propotions: 25% each) in term of their grades: <br/>
+        <ol>
+        <li>Grade between 0 and 8</li>
+        <li>Grade between 9 and 11</li>
+        <li>Grade between 12 and 14</li>
+        <li>Grade between 15 and 20</li>
+        </ol>
+        "
+        
+    })
+    
+    # Bivariate conclusions
+    output$biConclusions <- renderText({
+        "<h4><b><center>Students bivariate analysis</h4></b></center>  <br/><br/>
+        Now that we got to know the students through a simple univariate analysis, it would be interesting to know the students in rather a bidimensional space where we can unveal attributes correlations. 
+        <i><b>To do so, we will stick to our question answering strategy!</b></i>  <br/><br/>
+        <b>Does the students have more absences as they get older?</b>  <br/>
+        Your intuition is correct! Actually, all the student who are 15 years old have less than 14 absences while the older students have all kind of number of absences that can reach 75 absences. Well it's actually a single student but still, they have a got a way higher mean of absences comparing to the younger ones!<br/><br/>
+        <b>Is having failed several times potentially caused by being frequently absent?</b>  <br/>
+        Somehow. More than half ot the student that have failed many time have 0 absences while the other half have less than 20 absences. Moreover, 37% of these students have more than 7 absences. So yes, it isn't a direct cause for this specific sample.<br/><br/>
+        <b>How about alcohol consumption? Is it in any way related to failing?</b>  <br/>
+        Many would think that alcohol abuse may be causing some students to fail. Well it is in general true, in this case, it isn't the case. Almost all of the students that consume alcohol heavily (Dalc: 3 to 5 in scale of 1 to 5), have 0 failures. This proves that these students know how to handle party/work trade-off.<br/><br/>
+        "
+    })
     # Occurences (effectifs) plot for univariate analyzis
     # Depending on the variable type, it is either a boxplot or a barplot
     output$occurencesPlot <- renderPlotly({
         plotOccurences(input$univariateSelect)
     })
-
+    
     # Frequencies plot
     # Depending on variable type, it is either a barplot or a pie chart
     output$frequencyPlot <- renderPlotly({
         plotFrequencies(input$univariateSelect)
     })
-
+    
     # Cumulative occurences plot
     output$cumulativeOccurencesPlot <- renderPlotly({
         plotCumulativeOccurences(input$univariateSelect)
     })
-
+    
     # Quantitative statistics summary
     output$tabStat <- renderTable({
         if(! is.numeric(df[, input$univariateSelect])) return(NULL)
-
+        
         quantitativeTabStats()
     })
-
+    
     # Bivariate cloud points
     output$bivariateCloudPoints <- renderPlotly({
         plotBivariateCloudPoints(
@@ -89,7 +142,7 @@ deadpoolServer <- function(input, output) {
             input$bivariateSecondFeature
         )
     })
-
+    
     # Correlation
     output$correlation <- renderText({
         computeCorrelation(
@@ -97,14 +150,14 @@ deadpoolServer <- function(input, output) {
             input$bivariateSecondFeature
         )
     })
-
+    
     output$heatmapCorrelation <- renderPlot({
         nums.tmp <- unlist(lapply(df, is.numeric))
         corrMatrix.tmp = round(cor(df[, nums.tmp]), 2)
-
+        
         heatmap(corrMatrix.tmp)
     })
-
+    
     # Bivariate analysis boxplot plot
     output$bivariateBoxplot <- renderPlotly({
         bivariateBoxPlot(
@@ -112,7 +165,7 @@ deadpoolServer <- function(input, output) {
             input$bivariateSecondFeature
         )
     })
-
+    
     # Histogram of a qualitative feature according to final grade.
     output$qualitativeHistogramG3 <- renderPlotly({
         p <- ggplot(data=df) +
@@ -123,10 +176,10 @@ deadpoolServer <- function(input, output) {
             xlab(label = 'Final grade') +
             ylab(label = "Frequency") +
             theme(axis.text.x = element_text(angle=90,hjust=1,vjust=0.5))
-
+        
         return(ggplotly(p))
     })
-
+    
     # Boxplot of a qualitative feature according to final grade.
     output$qualitativeBoxplotsG3 <- renderPlotly({
         p <- qplot(
@@ -137,10 +190,10 @@ deadpoolServer <- function(input, output) {
             geom=c("boxplot","jitter"),
             fill= df[, input$selectqual]
         ) + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
-
+        
         return(ggplotly(p))
     })
-
+    
     # Cloud points of a quantitative feature according to final grade.
     output$quantitativeCloudPointsG3 <- renderPlotly({
         p <- plot_ly(
@@ -150,29 +203,29 @@ deadpoolServer <- function(input, output) {
             type = 'scatter',
             mode = 'markers'
         )
-
+        
         p <- p %>% add_trace(
             x = df[, input$selectquant],
             y = fitted(lm(df[, 'G3']~df[, input$selectquant])),
             mode = 'lines',
             name = 'Linear model'
         )
-
+        
         return(p)
     })
-
+    
     # Correlation factor of a quantitative feature according to final grade.
     output$quantitativeCorrG3 <- renderText({
         computeCorrelation('G3', input$selectquant)
     })
-
+    
     # Boxplot of a quantitative feature according to final grade.
     output$quantitativeBoxplotsG3 <- renderPlotly({
         columns <- c('G3', input$selectquant)
-
+        
         # Reshape data()
         data.stack <- melt(df[, columns], measure.vars = columns)
-
+        
         p <- qplot(
             x = data.stack[,1],
             y = data.stack[,2],
@@ -181,10 +234,10 @@ deadpoolServer <- function(input, output) {
             geom= "boxplot",
             fill=data.stack[, 1]
         ) + theme(legend.title=element_blank())
-
+        
         return(ggplotly(p))
     })
-
+    
     # Histogram of absences according to final grade.
     output$absenceHistogram <- renderPlotly({
         df_tmp <- data.frame(df)
@@ -192,23 +245,23 @@ deadpoolServer <- function(input, output) {
         df_tmp$absences <- tenure
         df_tmp = df_tmp[order(df_tmp$absences),]
         p <- ggplot(
-                df_tmp,
-                aes_string(x = 'G3' , fill='absences')
-            ) +
+            df_tmp,
+            aes_string(x = 'G3' , fill='absences')
+        ) +
             geom_histogram() +
             theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)) +
             labs(title= paste("Tenure groups count"))
-
+        
         return(ggplotly(p))
     })
-
+    
     # Boxplots of absences according to final grade.
     output$absenceBoxplot <- renderPlotly({
         df_tmp <- data.frame(df)
         tenure <- sapply(df$absences, discretize)
         df_tmp$absences <- tenure
         df_tmp = df_tmp[order(df_tmp$absences),]
-
+        
         p <- qplot(
             x = df_tmp$absences,
             y = df_tmp$G3,
@@ -217,10 +270,10 @@ deadpoolServer <- function(input, output) {
             geom = "boxplot",
             fill=df_tmp$Tenure
         ) + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
-
+        
         return(ggplotly(p))
     })
-
+    
     # KNN Accuracy boxplot
     output$accuracyBoxplot <- renderPlotly({
         B <- 10
@@ -233,10 +286,10 @@ deadpoolServer <- function(input, output) {
             
             train <- df_encoded[tr,]
             trainClass <- sapply(train$G3, discretizeGrades)
-
+            
             test <- df_encoded[-tr,]
             testClass <- sapply(test$G3, discretizeGrades)
-
+            
             ka <- input$k
             
             pred <- knn(
@@ -250,24 +303,24 @@ deadpoolServer <- function(input, output) {
         
         fig <- plot_ly(y = acc_valid, type = 'box', name='accuracy (succeed or fail)')
         fig <- fig %>% layout(title = "KNN validation accuracy (10-fold CV)")
-
+        
         return(fig)
     })
-
+    
     # KNN ROC Curve plot.
     output$ROC <- renderPlot({
         smp_size <- floor(0.75 * nrow(df_encoded))
         tr <- sample(seq_len(nrow(df_encoded)), smp_size)
-
+        
         train <- df_encoded[tr,]
         trainClass <- sapply(train$G3, binarize)
-
+        
         test <- df_encoded[-tr,]
         testClass <- sapply(test$G3, binarize)
-
+        
         prob <- rep(NA, nrow(test))
         ka <- input$k
-
+        
         res <- knn(
             train[, -ncol(df_encoded)],
             test[, -ncol(df_encoded)],
@@ -275,46 +328,18 @@ deadpoolServer <- function(input, output) {
             k=ka,
             prob=TRUE
         )
-
+        
         prob[res==1] <- attr(res,"prob")[res==1]
         prob[res==0] <- 1 - attr(res,"prob")[res==0]
-
+        
         pred <- prediction(prob, testClass)
         perf <- performance(pred, "tpr", "fpr")
-
+        
         plot(perf, main="ROC Curve")
         abline(a=0, b=1)
     })
-
-    # output$boxplotAcc2 <- renderPlotly({
-    #     B <- 10
-    #     acc_valid <- rep(NA,10)
-    #
-    #     for (b in 1:10)
-    #     {
-    #         smp_size <- floor(0.75 * nrow(df))
-    #         tr <- sample(1:nrow(df),smp_size)
-    #
-    #
-    #         train <- df_encoded[tr,]
-    #         trainClass = sapply(train$G3, binarize)
-    #         test <- df_encoded[-tr,]
-    #         testClass = sapply(test$G3, binarize)
-    #         train = train[, -ncol(df_encoded)]
-    #         train['G3'] = as.numeric(trainClass)
-    #         # Fit the model
-    #         model <- glm(  G3 ~., data = train, family = binomial)
-    #         prob <- model %>% predict(test[, -ncol(df_encoded)], type = "response")
-    #         pred <- ifelse(prob > 0.5, 1, 0)
-    #         acc_valid[b] <- mean(pred==testClass)
-    #     }
-    #
-    #     p <- plot_ly(y = acc_valid, type = 'box')
-    #
-    #     return(p)
-    #     # boxplot(acc_valid,main="Accuracy lors des 10-fold cross validation")
-    # })
-
+    
+    
     # Linear regression RMSE plot
     output$boxplotRMSE <- renderPlotly({
         B <- 10
@@ -335,32 +360,32 @@ deadpoolServer <- function(input, output) {
         
         fig <- plot_ly(y = rmse_valid, type = 'box', name='rmse on grade prediction')
         fig <- fig %>% layout(title = "Linear regression validation RMSE (10-fold CV)")
-
+        
         return(fig)
     })
-
+    
     # Linear regression method description.
-    output$regr_info <- renderPrint({
+    output$regr_info <- renderText({
         "In this section, we will try to predict a student grade using linear regression using not only quantitative variables but also encoded qualitative variables. Here is the RMSE result in the 10 fold cross validation!"
     })
-
+    
     # Plot of difference between predicted and real grades.
     output$barplot_diff <- renderPlotly({
         set.seed(1)
         row.number <- sample(seq_len(nrow(df)), 0.65*nrow(df))
-
+        
         train <- df_encoded[row.number,]
         test <- df_encoded[-row.number,]
-
+        
         model <- lm(G3~., data = train)
         pred <- predict(model, newdata = test)
         # diff <- pred - test$G3
-
+        
         # fig <- plot_ly(x = 1:11, y = diff[1:11], type = 'bar', name = 'student index')
         # fig <- fig %>% layout(title = '(PREDICTION - REAL GRADE) of 10 students',
         #                       xaxis = list(title = 'Student ID'),
         #                       yaxis = list(title = 'prediction - real_grade'))
-
+        
         fig <- plot_ly(
             x = seq_len(nrow(test)),
             y = test$G3,
@@ -368,7 +393,7 @@ deadpoolServer <- function(input, output) {
             mode = 'lines+markers',
             name = 'Real grade'
         )
-
+        
         fig <- fig %>% add_trace(
             x = seq_along(pred),
             y = pred,
@@ -376,15 +401,15 @@ deadpoolServer <- function(input, output) {
             mode = 'lines+markers',
             name = 'Predicted grade'
         )
-
+        
         return (fig)
     })
-
+    
     # KNN Classification method description.
-    output$classif_info <- renderPrint({
+    output$classif_info <- renderText({
         "We have discretized the marks column into two modalities: (succeeded, failed). The idea behind this is to predict either a student will fail or succeed in Mathematics and portuguese. To do so, we will use K nearest neighbors as a mere example"
     })
-
+    
     # Unsupervised (clustering) plot.
     output$clustering_plot <- renderPlot({
         
