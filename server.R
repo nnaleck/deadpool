@@ -439,6 +439,15 @@ deadpoolServer <- function(input, output) {
         "We have discretized the marks column into two modalities: (succeeded, failed). The idea behind this is to predict either a student will fail or succeed in Mathematics and portuguese. To do so, we will use K nearest neighbors as a mere example"
     })
     
+    # KNN Classification results interpretation
+    output$knnInterpretation <- renderText({
+        "Our validation accuracy varies from 0.6 to 0.75 which is not bad at all since we didn't use the algorithm properly. This is because all the variable are qualitative and instead of using the proper distance such as khi2, we onehot encoded the variables instead. The impact of this forced transformation we applied on our data to convert it in a way (SHOULD'T BE DONE) into quantitative variables can be seen in the ROC CURVE. The AUC surface isn't good."
+    }) 
+    
+    # Linear regression
+    output$regrConclusions <- renderText({
+        "The linear regression didn't give good results. This is mainly due to the fact that this method is supposed to be applied when the data is quantitative which isn't the case here. Same as with knn, we encoded the variables. The model managed sometime to predict the grade with a very small marge."
+    })
     # Unsupervised (clustering) plot.
     output$clustering_plot <- renderPlot({
         
@@ -446,6 +455,7 @@ deadpoolServer <- function(input, output) {
         
         fviz_cluster(km.res, df_encoded[, -ncol(df_encoded)], ellipse.type = "norm")
     })
+    
     
  
 }

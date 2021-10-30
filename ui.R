@@ -154,8 +154,9 @@ deadpoolUI <- shinyUI({
                         sidebarLayout(
                             sidebarPanel(
                                 h3('K Nearest neighbors'),
-                                textOutput(outputId = 'classif_info'),
                                 br(),
+                                tags$b('Contexte:'),
+                                htmlOutput(outputId = 'classif_info'),
                                 br(),
                                 sliderInput(
                                     'k',
@@ -163,7 +164,9 @@ deadpoolUI <- shinyUI({
                                     value = 6,
                                     min = 1,
                                     max = 100
-                                )            
+                                ),
+                                tags$b('Interpretation:'),
+                                htmlOutput('knnInterpretation')
                             ),
                             mainPanel(
                                 fluidRow(
@@ -182,7 +185,13 @@ deadpoolUI <- shinyUI({
                         sidebarLayout(
                             sidebarPanel(
                                 h3('Linear regression'),
-                                textOutput(outputId = 'regr_info')
+                                br(),
+                                tags$b('Contexte:'),
+                                textOutput(outputId = 'regr_info'),
+                                br(),
+                                tags$b('Interpretation:'),
+                                textOutput('regrConclusions')
+                                
                             ),
                             mainPanel(
                                 fluidRow(plotlyOutput(outputId = "barplot_diff")),
