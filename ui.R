@@ -216,14 +216,21 @@ deadpoolUI <- shinyUI({
                         'PCA (2-dim) + KMeans Clustering',
                         sidebarLayout(
                             sidebarPanel(
+                                tags$b('Context:'),
+                                htmlOutput('pcaContext'),
+                                br(),
                                 sliderInput(
                                     'nb_clusters',
-                                    'Number of clusters',
+                                    tags$b('Choose the number of clusters'),
                                     value = 3,
                                     min = 2,
                                     max = 7
-                                )
+                                ),
+                                tags$b('Interpretation:'),
+                                htmlOutput('pcaInterpretation'),
+                                
                             ),
+                            
                             mainPanel(
                                 fluidRow(
                                     column(12, plotOutput(outputId = "clustering_plot"))

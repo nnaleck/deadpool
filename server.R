@@ -448,6 +448,7 @@ deadpoolServer <- function(input, output) {
     output$regrConclusions <- renderText({
         "The linear regression didn't give good results. This is mainly due to the fact that this method is supposed to be applied when the data is quantitative which isn't the case here. Same as with knn, we encoded the variables. The model managed sometime to predict the grade with a very small marge."
     })
+    
     # Unsupervised (clustering) plot.
     output$clustering_plot <- renderPlot({
         
@@ -455,7 +456,14 @@ deadpoolServer <- function(input, output) {
         
         fviz_cluster(km.res, df_encoded[, -ncol(df_encoded)], ellipse.type = "norm")
     })
+
+    # PCA context
+    output$pcaContext <- renderText({
+        "In our case most of the variables are qualitative apart from absences. We kind of forced PCA on our data by encoding them so we can simulate quantitative variable. <i> However, we know that correspondance analysis (AFD) is way more fitted to our context!</i>"
+    })
     
-    
- 
+    # PCA interpretation
+    output$pcaInterpretation <- renderText({
+        "The clustering seems to be correct even if the first factoriel plan doesn't really show the separation. In fact, we can clearly see that adding a third principal componant orthogonal to our plan may solve the separation problem! We won't try to interpret the significance of the clusters since correspondance analysis is way better, we will rather explain the cluster with this method!"
+    })
 }
